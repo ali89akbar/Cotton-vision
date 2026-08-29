@@ -9,9 +9,12 @@ import {
   Card,
   CircularProgress,
   Button,
+  TextField,
+  Chip,
+  Box,
+  Divider,
 } from "@material-ui/core";
 import { DropzoneArea } from "material-ui-dropzone";
-import ClearIcon from "@material-ui/icons/Clear";
 import axios from "axios";
 
 const useStyles = makeStyles((theme) => ({
@@ -21,58 +24,113 @@ const useStyles = makeStyles((theme) => ({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f4f6f8",
-    padding: theme.spacing(2),
+    padding: theme.spacing(3),
   },
   card: {
-    maxWidth: 700,
+    maxWidth: 780,
     width: "100%",
     margin: "auto",
     padding: theme.spacing(4),
     textAlign: "center",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-    borderRadius: "20px",
-    backgroundColor: "#fff",
+    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
+    borderRadius: "24px",
+    backgroundColor: "#ffffff",
+  },
+  titleHeader: {
+    fontWeight: 700,
+    color: "#1b5e20",
+    marginBottom: theme.spacing(1),
+  },
+  subtitle: {
+    color: "#555",
+    marginBottom: theme.spacing(3),
+  },
+  cityInputContainer: {
+    marginBottom: theme.spacing(3),
+    display: "flex",
+    gap: theme.spacing(2),
+    justifyContent: "center",
+    alignItems: "center",
   },
   loader: {
-    margin: theme.spacing(2),
+    margin: theme.spacing(3),
+    color: "#2e7d32",
   },
   dataContainer: {
     marginTop: theme.spacing(3),
-    padding: theme.spacing(2),
-    background: "#f9f9f9",
-    border: "1px solid #e0e0e0",
-    borderRadius: "12px",
+    padding: theme.spacing(3),
+    background: "#f8faf8",
+    border: "1px solid #c8e6c9",
+    borderRadius: "16px",
     textAlign: "left",
   },
+  headerSection: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: theme.spacing(2),
+    flexWrap: "wrap",
+    gap: theme.spacing(1),
+  },
+  diseaseTitle: {
+    fontWeight: 700,
+    fontSize: "22px",
+    color: "#1b5e20",
+  },
+  urduTitle: {
+    fontSize: "20px",
+    fontWeight: 600,
+    color: "#2e7d32",
+    direction: "rtl",
+    marginBottom: theme.spacing(1),
+  },
   dataRow: {
-    marginBottom: theme.spacing(1.5),
-    fontSize: "16px",
+    marginBottom: theme.spacing(2),
+    fontSize: "15px",
+    lineHeight: "1.6",
   },
   dataLabel: {
-    fontWeight: 600,
+    fontWeight: 700,
     marginRight: theme.spacing(1),
-    color: "#555",
+    color: "#333",
   },
-  badgeMessage: {
-    marginTop: theme.spacing(3),
-    padding: theme.spacing(2),
+  chemicalBox: {
     background: "#e8f5e9",
-    color: "#2e7d32",
-    fontWeight: "bold",
+    borderLeft: "5px solid #2e7d32",
+    padding: theme.spacing(2),
+    borderRadius: "8px",
+    marginTop: theme.spacing(1.5),
+    marginBottom: theme.spacing(1.5),
+  },
+  weatherWarningBox: {
+    background: "#fff3e0",
+    borderLeft: "5px solid #ef6c00",
+    padding: theme.spacing(2),
+    borderRadius: "8px",
+    marginTop: theme.spacing(2),
+    color: "#e65100",
+    fontWeight: 600,
+  },
+  lowConfidenceBox: {
+    background: "#ffebee",
+    borderLeft: "5px solid #c62828",
+    padding: theme.spacing(2.5),
     borderRadius: "12px",
-    fontSize: "16px",
+    color: "#c62828",
+    textAlign: "left",
+    marginTop: theme.spacing(2),
   },
   buttonGroup: {
     display: "flex",
     justifyContent: "center",
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(3),
     gap: theme.spacing(2),
     flexWrap: "wrap",
   },
-  clearButton: {
-    width: "140px",
+  actionButton: {
+    minWidth: "140px",
     borderRadius: "30px",
-    padding: "10px 0",
+    padding: "10px 24px",
     fontSize: "14px",
     fontWeight: 600,
     textTransform: "uppercase",
@@ -81,10 +139,10 @@ const useStyles = makeStyles((theme) => ({
 
 const ColorButton = withStyles((theme) => ({
   root: {
-    color: theme.palette.getContrastText(theme.palette.primary.main),
-    backgroundColor: theme.palette.primary.main,
+    color: "#fff",
+    backgroundColor: "#2e7d32",
     "&:hover": {
-      backgroundColor: theme.palette.primary.dark,
+      backgroundColor: "#1b5e20",
     },
   },
 }))(Button);
@@ -94,18 +152,13 @@ export const ImageUpload = () => {
   const classes = useStyles();
 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [cityName, setCityName] = useState("Khairpur");
   const [data, setData] = useState(null);
-  const [careRoutine, setCareRoutine] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [badgeEarned, setBadgeEarned] = useState(false);
-  const [generatingRoutine, setGeneratingRoutine] = useState(false);
 
   const axiosInstance = axios.create({
     baseURL: "http://localhost:8000",
-  });
-
-  const axiosDatabase = axios.create({
-    baseURL: "http://127.0.0.1:6005",
   });
 
   const handleFileChange = (files) => {
@@ -118,218 +171,206 @@ export const ImageUpload = () => {
     setData(null);
   };
 
-  const generateCareRoutineWithGroq = async (diseaseName) => {
-  setGeneratingRoutine(true);
-  try {
-    const response = await axios.post(
-      "http://localhost:6005/generate-care-routine",
-      { diseaseName },
-      {
-        headers: { "Content-Type": "application/json" },
-        timeout: 30000 // 30 second timeout
-      }
-    );
-
-    // Handle both success and fallback cases
-    const routineData = response.data.usedFallback 
-      ? {
-          ...response.data.fallbackRoutine,
-          isFallback: true,
-          error: response.data.details
-        }
-      : {
-          ...response.data,
-          isFallback: false
-        };
-
-    setCareRoutine(routineData);
-
-    if (response.data.usedFallback) {
-      console.warn("Used fallback routine:", response.data.details);
-      // Optional: Show toast notification to user
-      alert(`Note: Using fallback routine. ${response.data.details}`);
-    }
-
-  } catch (error) {
-    console.error("API Error:", {
-      message: error.message,
-      response: error.response?.data,
-      config: error.config
-    });
-    
-    // Ultimate fallback
-    setCareRoutine({
-      morningCareRoutine: [
-        "1. Check plant health status",
-        "2. Water as needed (avoid overwatering)",
-        "3. Isolate plant if disease is contagious",
-        "4. Ensure proper sunlight",
-        "5. Monitor for changes"
-      ],
-      nightCareRoutine: [
-        "1. Evening inspection with flashlight",
-        "2. Adjust plant position if needed",
-        "3. Light misting if humidity is low",
-        "4. Check soil moisture depth",
-        "5. Prepare supplies for next day"
-      ],
-      isFallback: true,
-      error: "Connection failed. Using local fallback."
-    });
-    
-    alert("Network error. Using basic care instructions.");
-  } finally {
-    setGeneratingRoutine(false);
-  }
-};
-
-  const sendFile = async () => {
-    if (!selectedFile) return;
+  const sendFile = async (fileToUpload = selectedFile) => {
+    if (!fileToUpload) return;
 
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    formData.append("file", fileToUpload);
     setIsLoading(true);
 
     try {
-      const response = await axiosInstance.post("/predict", formData);
+      const response = await axiosInstance.post(
+        `/predict?city=${encodeURIComponent(cityName)}&confidence_threshold=0.70`,
+        formData
+      );
       if (response.status === 200) {
-        const prediction = response.data;
-        setData(prediction);
-        await generateCareRoutineWithGroq(prediction.class);
+        setData(response.data);
       }
     } catch (error) {
       console.error("Error sending file:", error);
+      alert("Error connecting to Plantwise Model API server (http://localhost:8000). Ensure main.py is running.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const savePrediction = async () => {
-  if (!data?.class || !careRoutine) {
-    alert("Prediction or care routine data is missing.");
-    return;
-  }
-
-  try {
-    const response = await axios.post(
-      "http://localhost:6005/save-prediction",
-      {
-        className: data.class,
-        morningCareRoutine: careRoutine.morningCareRoutine,
-        nightCareRoutine: careRoutine.nightCareRoutine
-      },
-      {
-        withCredentials: true, // This is crucial
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    if (response.data) {
-      alert("Prediction saved successfully!");
-      setBadgeEarned(true);
-    }
-  } catch (error) {
-    console.error("Error saving prediction:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
-    });
-    
-    if (error.response?.status === 401) {
-      alert("Session expired. Please log in again.");
-      navigate('/login');
-    } else {
-      alert("An error occurred while saving the prediction.");
-    }
-  }
-};
-
   const clearData = () => {
     setData(null);
-    setCareRoutine(null);
     setSelectedFile(null);
     setBadgeEarned(false);
   };
 
   useEffect(() => {
     if (selectedFile) {
-      sendFile();
+      sendFile(selectedFile);
     }
   }, [selectedFile]);
 
+  const getUrgencyChipColor = (urgency) => {
+    switch (urgency) {
+      case "CRITICAL":
+        return { bg: "#d32f2f", text: "#fff" };
+      case "HIGH":
+        return { bg: "#f57c00", text: "#fff" };
+      case "MODERATE_TO_HIGH":
+      case "MODERATE":
+        return { bg: "#fbc02d", text: "#000" };
+      default:
+        return { bg: "#388e3c", text: "#fff" };
+    }
+  };
+
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" style={{ background: "#1b5e20" }}>
         <Toolbar>
-          <Typography variant="h6" noWrap>
-            🌿 Plant Disease Detection System
+          <Typography variant="h6" style={{ fontWeight: 700, flexGrow: 1 }}>
+            🌱 Plantwise Detection - Cotton Crop Decision Engine
+          </Typography>
+          <Typography variant="subtitle2" style={{ color: "#a5d6a7" }}>
+            Khairpur, Sindh, Pakistan
           </Typography>
         </Toolbar>
       </AppBar>
 
       <Container className={classes.mainContainer}>
         <Card className={classes.card}>
+          <Typography variant="h4" className={classes.titleHeader}>
+            Cotton Leaf Disease Detection
+          </Typography>
+          <Typography variant="body1" className={classes.subtitle}>
+            Upload a cotton leaf photo for instant disease diagnosis, per-acre chemical dosage, and Khairpur weather spray advisories.
+          </Typography>
+
+          <div className={classes.cityInputContainer}>
+            <TextField
+              label="Location City / Village"
+              variant="outlined"
+              size="small"
+              value={cityName}
+              onChange={(e) => setCityName(e.target.value)}
+              placeholder="e.g. Khairpur, Gambat, Kot Diji"
+              helperText="Live weather will be automatically fetched for this location"
+              style={{ minWidth: 280 }}
+            />
+          </div>
+
           {!selectedFile && (
             <DropzoneArea
               acceptedFiles={["image/*"]}
-              dropzoneText={"Drag and drop an image or click to upload"}
+              dropzoneText={"Drag and drop a cotton leaf image here, or click to browse"}
               onChange={handleFileChange}
               filesLimit={1}
               showAlerts={false}
+              dropzoneClass="dropzone-custom"
             />
           )}
 
-          {(isLoading || generatingRoutine) && (
+          {isLoading && (
             <div>
               <CircularProgress className={classes.loader} />
-              <Typography>
-                {isLoading ? "Processing image..." : "Generating care routine..."}
+              <Typography variant="h6" style={{ color: "#2e7d32" }}>
+                Running AI model inference & fetching live {cityName} weather...
               </Typography>
             </div>
           )}
 
-          {data && (
-            <div className={classes.dataContainer}>
-              <div className={classes.dataRow}>
-                <span className={classes.dataLabel}>Disease Name:</span>
-                <span>{data.class}</span>
-              </div>
-              <div className={classes.dataRow}>
-                <span className={classes.dataLabel}>Accuracy:</span>
-                <span>{(parseFloat(data.confidence) * 100).toFixed(2)}%</span>
-              </div>
-              <div className={classes.dataRow}>
-                <span className={classes.dataLabel}>Morning Care Routine:</span>
-                {careRoutine?.morningCareRoutine ? (
-                  <ul>
-                    {careRoutine.morningCareRoutine.map((step, idx) => (
-                      <li key={`morning-${idx}`}>{step}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <span>Loading morning routine...</span>
-                )}
-              </div>
-              <div className={classes.dataRow}>
-                <span className={classes.dataLabel}>Night Care Routine:</span>
-                {careRoutine?.nightCareRoutine ? (
-                  <ul>
-                    {careRoutine.nightCareRoutine.map((step, idx) => (
-                      <li key={`night-${idx}`}>{step}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <span>Loading night routine...</span>
-                )}
-              </div>
+          {/* LOW CONFIDENCE RESPONSE */}
+          {data && data.status === "LOW_CONFIDENCE" && (
+            <div className={classes.lowConfidenceBox}>
+              <Typography variant="h6" style={{ fontWeight: 700, marginBottom: 8 }}>
+                ⚠️ Low Prediction Confidence ({data.confidence * 100}%)
+              </Typography>
+
+              <Typography variant="body1" style={{ marginBottom: 12 }}>
+                {data.action_required}
+              </Typography>
             </div>
           )}
 
-          {badgeEarned && (
-            <div className={classes.badgeMessage}>
-              🎉 Congratulations! You've earned a badge for detecting a plant disease!
+          {/* SUCCESS ADVISORY RESPONSE */}
+          {data && data.status === "SUCCESS" && (
+            <div className={classes.dataContainer}>
+              <div className={classes.headerSection}>
+                <div>
+                  <Typography className={classes.diseaseTitle}>
+                    {data.diagnosis.predicted_class}
+                  </Typography>
+                  <Typography className={classes.urduTitle}>
+                    {data.diagnosis.disease_name_urdu}
+                  </Typography>
+                </div>
+                <Box display="flex" alignItems="center" gridGap={8}>
+                  <Chip
+                    label={`Urgency: ${data.actionable_decision.urgency_level}`}
+                    style={{
+                      backgroundColor: getUrgencyChipColor(data.actionable_decision.urgency_level).bg,
+                      color: getUrgencyChipColor(data.actionable_decision.urgency_level).text,
+                      fontWeight: 700,
+                    }}
+                  />
+                  <Chip
+                    label={`Confidence: ${data.diagnosis.confidence_percentage}%`}
+                    color="primary"
+                    variant="outlined"
+                    style={{ fontWeight: 700 }}
+                  />
+                </Box>
+              </div>
+
+              <Divider style={{ margin: "16px 0" }} />
+
+              <div className={classes.chemicalBox}>
+                <Typography variant="h6" style={{ fontWeight: 700, color: "#1b5e20", marginBottom: 6 }}>
+                  💊 Actionable Chemical Remedy
+                </Typography>
+                <div className={classes.dataRow}>
+                  <span className={classes.dataLabel}>Spray Formulation:</span>
+                  <span>{data.actionable_decision.chemical_recommendation}</span>
+                </div>
+                <div className={classes.dataRow}>
+                  <span className={classes.dataLabel}>Dosage Per Acre:</span>
+                  <span>{data.actionable_decision.dosage_per_acre}</span>
+                </div>
+                <div className={classes.dataRow}>
+                  <span className={classes.dataLabel}>Application Timing:</span>
+                  <span>{data.actionable_decision.application_instructions}</span>
+                </div>
+              </div>
+
+              <div className={classes.dataRow}>
+                <span className={classes.dataLabel}>Sindh Agronomic Context:</span>
+                <span>{data.actionable_decision.agronomic_context_sindh}</span>
+              </div>
+
+              {/* WEATHER SAFETY ADVISORY SECTION */}
+              {data.weather_safety_khairpur && (
+                <div className={data.weather_safety_khairpur.can_spray ? classes.chemicalBox : classes.weatherWarningBox}>
+                  <Typography variant="h6" style={{ fontWeight: 700, marginBottom: 6 }}>
+                    🌦️ Live Weather Spray Safety ({data.weather_safety_khairpur.conditions_assessed.temperature_c}°C, {data.weather_safety_khairpur.conditions_assessed.wind_speed_kmh} km/h wind, {data.weather_safety_khairpur.conditions_assessed.humidity_pct}% humidity)
+                  </Typography>
+
+                  <div className={classes.dataRow}>
+                    <span className={classes.dataLabel}>Spray Status:</span>
+                    <span>{data.weather_safety_khairpur.can_spray ? "✅ SAFE TO SPRAY" : "⛔ SPRAYING TEMPORARILY POSTPONED"}</span>
+                  </div>
+
+                  <div className={classes.dataRow}>
+                    <span className={classes.dataLabel}>Recommended Time Window:</span>
+                    <span>{data.weather_safety_khairpur.recommended_window}</span>
+                  </div>
+
+                  {data.weather_safety_khairpur.weather_warnings && data.weather_safety_khairpur.weather_warnings.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      {data.weather_safety_khairpur.weather_warnings.map((warn, i) => (
+                        <div key={i} style={{ color: "#d84315", fontWeight: 700 }}>
+                          • {warn}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -337,18 +378,10 @@ export const ImageUpload = () => {
             <div className={classes.buttonGroup}>
               <ColorButton
                 variant="contained"
-                className={classes.clearButton}
+                className={classes.actionButton}
                 onClick={clearData}
               >
-                Clear
-              </ColorButton>
-              <ColorButton
-                variant="contained"
-                className={classes.clearButton}
-                onClick={savePrediction}
-                disabled={!careRoutine}
-              >
-                Save
+                Upload Another Photo
               </ColorButton>
             </div>
           )}
