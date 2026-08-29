@@ -1,0 +1,11 @@
+Model Information:
+* title:	Decorative Tree
+* source:	https://sketchfab.com/3d-models/decorative-tree-9d14f5bc63d94f49b23e94128bf797c0
+* author:	PolyCraftSutdios (https://sketchfab.com/PolyCraftSutdios)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Decorative Tree" (https://sketchfab.com/3d-models/decorative-tree-9d14f5bc63d94f49b23e94128bf797c0) by PolyCraftSutdios (https://sketchfab.com/PolyCraftSutdios) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

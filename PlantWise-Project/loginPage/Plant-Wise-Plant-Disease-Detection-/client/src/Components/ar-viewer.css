@@ -1,0 +1,52 @@
+.ar-container {
+  margin-top: 80px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  /* New additions for proper scaling */
+  perspective: 1000px;
+}
+
+.a-canvas {
+  position: fixed !important;
+  /* Center the AR viewport */
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  /* Maintain aspect ratio */
+  /* width: 100vmin !important;
+  height: 100vmin !important; */
+  z-index: 0;
+  /* Prevent distortion */
+  object-fit: contain;
+}
+
+/* Add this for proper camera feed handling */
+video[arjs] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 100% !important;
+  height: auto !important;
+  object-fit: cover !important;
+  z-index: -1 !important;
+}
+
+.ar-overlay {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  background: rgba(0,0,0,0.7);
+  padding: 12px 24px;
+  border-radius: 25px;
+  z-index: 1000;
+  pointer-events: none;
+  /* Ensure visibility */
+  backdrop-filter: blur(2px);
+}

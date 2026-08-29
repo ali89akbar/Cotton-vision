@@ -1,0 +1,77 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@ar-js-org/ar.js": "^3.4.0",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@google/model-viewer": "^4.0.0",
+    "@material-ui/core": "^4.12.4",
+    "@material-ui/icons": "^4.11.3",
+    "@material-ui/lab": "^4.0.0-alpha.61",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "aframe": "^1.7.0",
+    "aframe-extras": "^7.5.4",
+    "aframe-react": "^4.4.0",
+    "assert": "^2.1.0",
+    "axios": "^1.6.2",
+    "browserfs": "^1.4.3",
+    "browserify-fs": "^1.0.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "groq-sdk": "^0.23.0",
+    "material-ui-dropzone": "^3.5.0",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-helmet-async": "^2.0.5",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^6.20.1",
+    "react-scripts": "5.0.1",
+    "react-web-ar": "^1.0.0-beta0",
+    "stream-browserify": "^3.0.0",
+    "styled-components": "^6.1.18",
+    "url": "^0.11.4",
+    "util": "^0.12.5",
+    "vm-browserify": "^1.1.2",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "set HTTPS=true && react-app-rewired start",
+    "start-secure": "react-app-rewired start & ngrok http 3000",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "browser": {
+    "fs": false,
+    "path": "path-browserify",
+    "crypto": "crypto-browserify",
+    "stream": "stream-browserify"
+  },
+  "devDependencies": {
+    "react-app-rewired": "^2.2.1"
+  }
+}
