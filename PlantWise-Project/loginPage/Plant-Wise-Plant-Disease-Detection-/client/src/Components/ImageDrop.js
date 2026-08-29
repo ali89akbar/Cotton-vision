@@ -155,7 +155,6 @@ export const ImageUpload = () => {
   const [cityName, setCityName] = useState("Khairpur");
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [badgeEarned, setBadgeEarned] = useState(false);
 
   const axiosInstance = axios.create({
     baseURL: "http://localhost:8000",
@@ -197,7 +196,6 @@ export const ImageUpload = () => {
   const clearData = () => {
     setData(null);
     setSelectedFile(null);
-    setBadgeEarned(false);
   };
 
   useEffect(() => {
@@ -220,6 +218,8 @@ export const ImageUpload = () => {
     }
   };
 
+  const weatherSafety = data?.weather_safety_advisory || data?.weather_safety_khairpur;
+
   return (
     <>
       <AppBar position="static" style={{ background: "#1b5e20" }}>
@@ -228,7 +228,7 @@ export const ImageUpload = () => {
             🌱 Plantwise Detection - Cotton Crop Decision Engine
           </Typography>
           <Typography variant="subtitle2" style={{ color: "#a5d6a7" }}>
-            Khairpur, Sindh, Pakistan
+            {data?.region || `${cityName}, Sindh, Pakistan`}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -239,7 +239,7 @@ export const ImageUpload = () => {
             Cotton Leaf Disease Detection
           </Typography>
           <Typography variant="body1" className={classes.subtitle}>
-            Upload a cotton leaf photo for instant disease diagnosis, per-acre chemical dosage, and Khairpur weather spray advisories.
+            Upload a cotton leaf photo for instant disease diagnosis, per-acre chemical dosage, and real-time weather spray advisories.
           </Typography>
 
           <div className={classes.cityInputContainer}>
@@ -249,9 +249,9 @@ export const ImageUpload = () => {
               size="small"
               value={cityName}
               onChange={(e) => setCityName(e.target.value)}
-              placeholder="e.g. Khairpur, Gambat, Kot Diji"
+              placeholder="e.g. Sukkur, Khairpur, Gambat, Kot Diji"
               helperText="Live weather will be automatically fetched for this location"
-              style={{ minWidth: 280 }}
+              style={{ minWidth: 300 }}
             />
           </div>
 
@@ -262,7 +262,6 @@ export const ImageUpload = () => {
               onChange={handleFileChange}
               filesLimit={1}
               showAlerts={false}
-              dropzoneClass="dropzone-custom"
             />
           )}
 
@@ -279,10 +278,12 @@ export const ImageUpload = () => {
           {data && data.status === "LOW_CONFIDENCE" && (
             <div className={classes.lowConfidenceBox}>
               <Typography variant="h6" style={{ fontWeight: 700, marginBottom: 8 }}>
-                ⚠️ Low Prediction Confidence ({data.confidence * 100}%)
+                ⚠️ Low Prediction Confidence ({(data.confidence * 100).toFixed(1)}%)
               </Typography>
-
-              <Typography variant="body1" style={{ marginBottom: 12 }}>
+              <Typography variant="subtitle2" style={{ fontWeight: 600, color: "#b71c1c", marginBottom: 8 }}>
+                Region: {data.region}
+              </Typography>
+              <Typography variant="body1">
                 {data.action_required}
               </Typography>
             </div>
@@ -298,6 +299,9 @@ export const ImageUpload = () => {
                   </Typography>
                   <Typography className={classes.urduTitle}>
                     {data.diagnosis.disease_name_urdu}
+                  </Typography>
+                  <Typography variant="caption" style={{ color: "#2e7d32", fontWeight: 600 }}>
+                    Target Region: {data.region}
                   </Typography>
                 </div>
                 <Box display="flex" alignItems="center" gridGap={8}>
@@ -339,30 +343,30 @@ export const ImageUpload = () => {
               </div>
 
               <div className={classes.dataRow}>
-                <span className={classes.dataLabel}>Sindh Agronomic Context:</span>
+                <span className={classes.dataLabel}>Agronomic Context:</span>
                 <span>{data.actionable_decision.agronomic_context_sindh}</span>
               </div>
 
               {/* WEATHER SAFETY ADVISORY SECTION */}
-              {data.weather_safety_khairpur && (
-                <div className={data.weather_safety_khairpur.can_spray ? classes.chemicalBox : classes.weatherWarningBox}>
+              {weatherSafety && (
+                <div className={weatherSafety.can_spray ? classes.chemicalBox : classes.weatherWarningBox}>
                   <Typography variant="h6" style={{ fontWeight: 700, marginBottom: 6 }}>
-                    🌦️ Live Weather Spray Safety ({data.weather_safety_khairpur.conditions_assessed.temperature_c}°C, {data.weather_safety_khairpur.conditions_assessed.wind_speed_kmh} km/h wind, {data.weather_safety_khairpur.conditions_assessed.humidity_pct}% humidity)
+                    🌦️ Live Weather Spray Safety for {data.region} ({weatherSafety.conditions_assessed.temperature_c}°C, {weatherSafety.conditions_assessed.wind_speed_kmh} km/h wind, {weatherSafety.conditions_assessed.humidity_pct}% humidity)
                   </Typography>
 
                   <div className={classes.dataRow}>
                     <span className={classes.dataLabel}>Spray Status:</span>
-                    <span>{data.weather_safety_khairpur.can_spray ? "✅ SAFE TO SPRAY" : "⛔ SPRAYING TEMPORARILY POSTPONED"}</span>
+                    <span>{weatherSafety.can_spray ? "✅ SAFE TO SPRAY" : "⛔ SPRAYING TEMPORARILY POSTPONED"}</span>
                   </div>
 
                   <div className={classes.dataRow}>
                     <span className={classes.dataLabel}>Recommended Time Window:</span>
-                    <span>{data.weather_safety_khairpur.recommended_window}</span>
+                    <span>{weatherSafety.recommended_window}</span>
                   </div>
 
-                  {data.weather_safety_khairpur.weather_warnings && data.weather_safety_khairpur.weather_warnings.length > 0 && (
+                  {weatherSafety.weather_warnings && weatherSafety.weather_warnings.length > 0 && (
                     <div style={{ marginTop: 8 }}>
-                      {data.weather_safety_khairpur.weather_warnings.map((warn, i) => (
+                      {weatherSafety.weather_warnings.map((warn, i) => (
                         <div key={i} style={{ color: "#d84315", fontWeight: 700 }}>
                           • {warn}
                         </div>
