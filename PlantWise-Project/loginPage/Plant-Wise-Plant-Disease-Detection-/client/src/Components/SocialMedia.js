@@ -197,19 +197,14 @@ const SocialMedia = () => {
   // }, [navigate]);
 
   useEffect(() => {
-    // Load Facebook SDK and check auth
     const initialize = async () => {
       try {
-        await loadFacebookSDK();
-        await checkAuthAndFetchData();
-      } catch (err) {
-        console.error('Initialization error:', err);
-        setError('Failed to initialize application');
-        navigate('/login');
-      }
+        loadFacebookSDK().catch((err) => console.warn("FB SDK optional load skipped:", err));
+      } catch (e) {}
+      await checkAuthAndFetchData();
     };
     initialize();
-  }, [navigate]);
+  }, []);
 
   const checkAuthAndFetchData = async () => {
     try {
@@ -217,13 +212,17 @@ const SocialMedia = () => {
       const authResponse = await axios.get('/login/sucess');
       if (authResponse.data.user) {
         setUser(authResponse.data.user);
-        const postsResponse = await axios.get('/api/posts');
-        setPosts(postsResponse.data);
+        try {
+          const postsResponse = await axios.get('/api/posts');
+          setPosts(postsResponse.data);
+        } catch {
+          console.warn("Could not fetch posts");
+        }
       } else {
-        navigate('/login');
+        setUser(null);
       }
     } catch (err) {
-      navigate('/login');
+      setUser(null);
     } finally {
       setAuthLoading(false);
     }
@@ -345,6 +344,29 @@ const SocialMedia = () => {
       <Box className={classes.loadingContainer}>
         <CircularProgress style={{ color: '#3A7D44' }} />
       </Box>
+    );
+  }
+
+  if (!user && !authLoading) {
+    return (
+      <div className={classes.root} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <Card style={{ padding: 40, textAlign: 'center', borderRadius: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: 500, background: '#ffffff' }}>
+          <LocalFlorist style={{ fontSize: 54, color: '#059669', marginBottom: 12 }} />
+          <Typography variant="h5" style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Outfit', sans-serif" }}>
+            🔒 Registered Farmer Access Only
+          </Typography>
+          <Typography variant="body1" style={{ marginTop: 10, color: '#475569', lineHeight: 1.6 }}>
+            Please log in with your account to access the Farmer Community, view field updates, and share disease reports directly to Facebook.
+          </Typography>
+          <Button
+            variant="contained"
+            style={{ marginTop: 24, background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', fontWeight: 700, borderRadius: 30, padding: '12px 30px' }}
+            onClick={() => navigate('/login')}
+          >
+            🔑 Login to Access Community & FB Share
+          </Button>
+        </Card>
+      </div>
     );
   }
 

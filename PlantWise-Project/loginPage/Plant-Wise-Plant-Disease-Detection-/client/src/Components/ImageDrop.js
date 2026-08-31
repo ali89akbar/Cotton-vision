@@ -444,11 +444,16 @@ export const ImageUpload = () => {
 
     if (isPlayingAudio) {
       if (window.currentAudioElement) {
-        window.currentAudioElement.pause();
+        try {
+          window.currentAudioElement.pause();
+          window.currentAudioElement.currentTime = 0;
+        } catch (e) {}
         window.currentAudioElement = null;
       }
       if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {}
       }
       setIsPlayingAudio(false);
       return;
@@ -469,22 +474,43 @@ export const ImageUpload = () => {
 
       const blob = await response.blob();
       const audioUrl = URL.createObjectURL(blob);
-      const audio = new Audio(audioUrl);
+      const audio = new Audio();
+      audio.src = audioUrl;
       window.currentAudioElement = audio;
 
-      audio.onended = () => setIsPlayingAudio(false);
-      audio.onerror = () => setIsPlayingAudio(false);
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+        try { URL.revokeObjectURL(audioUrl); } catch (e) {}
+        window.currentAudioElement = null;
+      };
 
-      await audio.play();
+      audio.onerror = (e) => {
+        console.warn("Audio element error:", e);
+        setIsPlayingAudio(false);
+        try { URL.revokeObjectURL(audioUrl); } catch (err) {}
+        window.currentAudioElement = null;
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Audio play prevented/interrupted:", err);
+          setIsPlayingAudio(false);
+        });
+      }
     } catch (error) {
       console.warn("Backend MP3 stream failed, attempting WebSpeech fallback...", error);
       if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = ["ur", "sd", "pa", "skr", "ps"].includes(language) ? "ur-PK" : "en-US";
-        utterance.onend = () => setIsPlayingAudio(false);
-        utterance.onerror = () => setIsPlayingAudio(false);
-        window.speechSynthesis.speak(utterance);
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(textToSpeak);
+          utterance.lang = ["ur", "sd", "pa", "skr", "ps"].includes(language) ? "ur-PK" : "en-US";
+          utterance.onend = () => setIsPlayingAudio(false);
+          utterance.onerror = () => setIsPlayingAudio(false);
+          window.speechSynthesis.speak(utterance);
+        } catch (speechErr) {
+          setIsPlayingAudio(false);
+        }
       } else {
         setIsPlayingAudio(false);
       }

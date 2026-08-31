@@ -126,18 +126,12 @@ const awardBadge = async (user, badgeName, plantClassName = "") => {
 
 // Passport serialization
 passport.serializeUser((user, done) => {
-  done(null, {
-    id: user._id,
-    googleId: user.googleId,
-    displayName: user.displayName,
-    email: user.email,
-    image: user.image
-  });
+  done(null, user._id || user.id);
 });
 
-passport.deserializeUser(async (user, done) => {
+passport.deserializeUser(async (id, done) => {
   try {
-    const foundUser = await userdb.findById(user.id);
+    const foundUser = await userdb.findById(id);
     done(null, foundUser);
   } catch (err) {
     done(err, null);
@@ -608,18 +602,40 @@ app.put("/updateCareRoutine", async (req, res) => {
 
 app.get("/api/posts", isAuthenticated, async (req, res) => {
   try {
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const posts = await Post.find({ user: req.user._id })
+    const posts = await Post.find()
       .populate("user", "displayName image")
       .sort({ createdAt: -1 });
 
     res.status(200).json(posts);
   } catch (error) {
-    console.error("Error fetching posts:", error); // Add this line
+    console.error("Error fetching posts:", error);
     res.status(500).json({ message: "Error fetching posts" });
+  }
+});
+
+app.post("/api/posts", isAuthenticated, async (req, res) => {
+  try {
+    const { imageUrl, description } = req.body;
+    const userId = req.user ? (req.user._id || req.user.id) : null;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized - User ID missing" });
+    }
+
+    const newPost = new Post({
+      user: userId,
+      imageUrl: imageUrl || "https://images.unsplash.com/photo-1592417817098-8f3d6ef23a8d",
+      description: description || "Cotton leaf diagnosis field update",
+      likes: [],
+      comments: []
+    });
+
+    await newPost.save();
+
+    const populatedPost = await Post.findById(newPost._id).populate("user", "displayName image");
+    res.status(201).json(populatedPost);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ message: "Error creating post", error: error.message });
   }
 });
 
