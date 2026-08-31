@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { FaLeaf, FaFlask, FaCloudSun, FaShieldAlt, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
 import './home.css';
 
 const Home = () => {
@@ -8,12 +9,18 @@ const Home = () => {
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
-          <h1 className="app-title">Plant<span className="highlight">Wise</span></h1>
-          <p className="tagline">Your Smart Plant Care Companion</p>
+          <div className="app-badge">
+            <FaShieldAlt /> Hackathon Production Release 2026
+          </div>
+          <h1 className="app-title">Plant<span className="highlight">Wise</span> Detection</h1>
+          <p className="tagline">
+            AI-Powered Cotton Disease Classification & Weather-Aware Agronomic Decision Engine for Khairpur & Sindh Farmers.
+          </p>
           <div className="cta-buttons">
-            
-            <NavLink to="/dashboard" className="primary-btn">Get Started</NavLink>
-            <a href='#howworks' className="secondary-btn">See How It Works</a>
+            <NavLink to="/dashboard" className="primary-btn">
+              Launch AI Scanner <FaArrowRight style={{ marginLeft: 8 }} />
+            </NavLink>
+            <a href="#howworks" className="secondary-btn">How It Works</a>
           </div>
         </div>
         <div className="hero-image"></div>
@@ -21,136 +28,94 @@ const Home = () => {
 
       {/* Features Section */}
       <section className="features-section">
-        <h2 className="section-title">Revolutionize Your Plant Care</h2>
+        <h2 className="section-title">Precision Agricultural Decision Engine</h2>
         <div className="features-grid">
-          {/* Feature 1: Disease Detection */}
           <div className="feature-card">
-            <div className="feature-icon disease-detection"></div>
-            <h3>Plant Disease Detection</h3>
-            <p>Upload photos of your plants to detect diseases early using our advanced AI system.</p>
+            <div className="feature-icon-badge">
+              <FaLeaf />
+            </div>
+            <h3>Cotton Disease AI Diagnostics</h3>
+            <p>Classifies Aphids, Army worm, Bacterial Blight, Powdery Mildew, Target spot, and Healthy foliage with MobileNetV2.</p>
           </div>
 
-          {/* Feature 2: AR Visualization */}
           <div className="feature-card">
-            <div className="feature-icon ar-visualization"></div>
-            <h3>AR Visualization</h3>
-            <p>See how plants will look in your space before buying with our augmented reality feature.</p>
+            <div className="feature-icon-badge">
+              <FaFlask />
+            </div>
+            <h3>Per-Acre Spray Dosage</h3>
+            <p>Provides exact pesticide formulations, active ingredients, application methods, and per-acre dosages tailored for Sindh.</p>
           </div>
 
-          {/* Feature 3: Care Tracking */}
           <div className="feature-card">
-            <div className="feature-icon care-tracking"></div>
-            <h3>Personalized Care Tracking</h3>
-            <p>Get customized care schedules and reminders tailored to each of your plants.</p>
+            <div className="feature-icon-badge">
+              <FaCloudSun />
+            </div>
+            <h3>Real-Time Weather Guardrails</h3>
+            <p>Integrates OpenWeatherMap API to detect wind drift, heatwaves, and rain risk before recommending pesticide spray.</p>
           </div>
 
-          {/* Feature 4: Gamification */}
           <div className="feature-card">
-            <div className="feature-icon gamification"></div>
-            <h3>Gamified Experience</h3>
-            <p>Earn points, badges, and maintain streaks for consistent plant care.</p>
+            <div className="feature-icon-badge">
+              <FaShieldAlt />
+            </div>
+            <h3>70% Low Confidence Safeguard</h3>
+            <p>Prevents improper chemical spraying by requesting a clearer photograph if model confidence drops below 70%.</p>
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="how-it-works">
-        <h2 className="section-title" id='howworks'>How PlantWise Works</h2>
+      <section className="how-it-works" id="howworks">
+        <h2 className="section-title">How PlantWise Works</h2>
         <div className="steps-container">
           <div className="step">
             <div className="step-number">1</div>
-            <h3>Add Your Plants</h3>
-            <p>Create a profile for each plant with species, location, and care details.</p>
+            <h3>Select Location</h3>
+            <p>Choose your Sindh city or village (e.g. Khairpur, Sukkur, Gambat) to pull live weather.</p>
           </div>
           <div className="step">
             <div className="step-number">2</div>
-            <h3>Monitor Health</h3>
-            <p>Use our AI to scan for diseases and get treatment recommendations.</p>
+            <h3>Upload Leaf Photo</h3>
+            <p>Upload a clear photo of the affected cotton leaf into the AI scanner.</p>
           </div>
           <div className="step">
             <div className="step-number">3</div>
-            <h3>Follow Care Plan</h3>
-            <p>Receive personalized reminders for watering, sunlight, and other needs.</p>
+            <h3>Instant AI Diagnosis</h3>
+            <p>Receive English & Urdu pathogen identification with confidence score.</p>
           </div>
           <div className="step">
             <div className="step-number">4</div>
-            <h3>Watch Them Thrive</h3>
-            <p>Track progress, earn rewards, and enjoy healthier, happier plants.</p>
+            <h3>Spray & Safety Plan</h3>
+            <p>Get exact chemical spray dosages and real-time weather safety status.</p>
           </div>
         </div>
       </section>
 
-      {/* AR Preview Section */}
-      <section className="ar-preview">
-        <div className="ar-content">
-          <h2>Visualize Your Plants in AR</h2>
-          <p>See how new plants will look in your space before you buy them. Our AR technology helps you make perfect placement decisions.</p>
-          
-          <NavLink to="/ar" className="primary-btn">Try AR Now</NavLink>
-        </div>
-        <model-viewer
-          src="/tomato/scene.gltf"
-          alt="3D Plant Model"
-          auto-rotate
-          camera-controls
-          ar
-          style={{
-            width: '50%',
-            height: '500px',
-            background: '#fff',
-            borderRadius: '16px',
-          }}
-        ></model-viewer>
-
-
-      </section>
-
-      {/* Community Section */}
+      {/* Community & Stats Section */}
       <section className="community-section">
-        <h2 className="section-title">Join Our Growing Community</h2>
+        <h2 className="section-title" style={{ color: 'white' }}>Empowering Sindh Agriculture</h2>
         <div className="community-stats">
-          <div className="stat">
-            <h3>10,000+</h3>
-            <p>Happy Plant Parents</p>
+          <div className="stat-box">
+            <h3>99%+</h3>
+            <p>TFLite Edge Precision</p>
           </div>
-          <div className="stat">
-            <h3>50,000+</h3>
-            <p>Plants Thriving</p>
+          <div className="stat-box">
+            <h3>6</h3>
+            <p>Target Cotton Classes</p>
           </div>
-          <div className="stat">
-            <h3>5,000+</h3>
-            <p>Diseases Detected</p>
-          </div>
-        </div>
-        <NavLink to="/badge-progress" className="secondary-btn">Share Your Progress</NavLink>
-      </section>
-
-      {/* Testimonials */}
-      <section className="testimonials">
-        <h2 className="section-title">What Our Users Say</h2>
-        <div className="testimonial-cards">
-          <div className="testimonial">
-            <p>"PlantWise saved my monstera from root rot! The early detection feature is a game-changer."</p>
-            <div className="user">
-              <div className="avatar avatar1"></div>
-              <span>- Sarah K.</span>
-            </div>
-          </div>
-          <div className="testimonial">
-            <p>"I've never been able to keep plants alive before. The care reminders make all the difference!"</p>
-            <div className="user">
-              <div className="avatar avatar2"></div>
-              <span>- Michael T.</span>
-            </div>
+          <div className="stat-box">
+            <h3><FaCheckCircle style={{ fontSize: '2.5rem' }} /></h3>
+            <p>Weather Safety Guard</p>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
       <section className="final-cta">
-        <h2>Ready to Transform Your Plant Care?</h2>
-        <NavLink to="/dashboard" className="primary-btn large">Start Your Plant Journey Today</NavLink>
-        {/* <button className="primary-btn large">Start Your Plant Journey Today</button> */}
+        <h2>Ready to Diagnose Your Crops?</h2>
+        <NavLink to="/dashboard" className="primary-btn large">
+          Open AI Leaf Scanner Now
+        </NavLink>
       </section>
     </div>
   );

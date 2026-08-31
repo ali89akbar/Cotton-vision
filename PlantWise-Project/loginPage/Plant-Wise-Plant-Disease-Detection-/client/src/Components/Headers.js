@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './header.css';
 import { NavLink } from 'react-router-dom';
 import axios from 'axios';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaLeaf, FaBars, FaTimes } from 'react-icons/fa';
 
 const Headers = () => {
     const [userdata, setUserdata] = useState({});
@@ -11,7 +11,7 @@ const Headers = () => {
     const getUser = async () => {
         try {
             const response = await axios.get('http://localhost:6005/login/sucess', { withCredentials: true });
-            setUserdata(response.data.user);
+            setUserdata(response.data.user || {});
         } catch (error) {
             console.log('error', error);
         }
@@ -32,7 +32,12 @@ const Headers = () => {
     return (
         <header className="header">
             <nav className="navbar">
-                <NavLink to="/" className="logo">Plant Wise</NavLink>
+                <NavLink to="/" className="logo-container">
+                    <div className="logo-badge">
+                        <FaLeaf />
+                    </div>
+                    <span className="logo-text">Plant<span>Wise</span></span>
+                </NavLink>
 
                 <div className="menu-icon" onClick={toggleMenu}>
                     {menuOpen ? <FaTimes /> : <FaBars />}
@@ -40,16 +45,16 @@ const Headers = () => {
 
                 <ul className={menuOpen ? 'nav-links open' : 'nav-links'}>
                     <li><NavLink to="/" onClick={() => setMenuOpen(false)}>Home</NavLink></li>
+                    <li><NavLink to="/dashboard" className="model-pill" onClick={() => setMenuOpen(false)}>AI AI Disease Scanner</NavLink></li>
 
                     {Object.keys(userdata).length > 0 ? (
                         <>
                             <li><NavLink to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</NavLink></li>
-                            <li><NavLink to="/dashboard" onClick={() => setMenuOpen(false)}>Model</NavLink></li>
                             <li><NavLink to="/saved-plants" onClick={() => setMenuOpen(false)}>Saved Plants</NavLink></li>
                             <li><NavLink to="/badge-progress" onClick={() => setMenuOpen(false)}>Badge Progress</NavLink></li>
                             <li className="user-name">{userdata?.displayName}</li>
-                            <li><img src={userdata?.image} className="user-img" alt="user" /></li>
-                            <li onClick={logout} className='logout-btn'>Logout</li>
+                            {userdata?.image && <li><img src={userdata?.image} className="user-img" alt="user" /></li>}
+                            <li onClick={logout} className="logout-btn">Logout</li>
                         </>
                     ) : (
                         <li><NavLink to="/login" onClick={() => setMenuOpen(false)}>Login</NavLink></li>

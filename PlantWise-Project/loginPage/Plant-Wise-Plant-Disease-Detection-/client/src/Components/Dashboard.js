@@ -1,31 +1,25 @@
 import axios from 'axios';
-import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
 import { ImageUpload } from './ImageDrop';
+
 const Dashboard = () => {
-
-  const navigate = useNavigate();
-
   const getUser = async () => {
     try {
-        const response = await axios.get("http://localhost:6005/login/sucess", { withCredentials: true });
-
-        console.log("response",response)
+      await axios.get("http://localhost:6005/login/sucess", { withCredentials: true });
     } catch (error) {
-      navigate("*")
+      console.log("Demo mode: running local scanner without OAuth login session");
     }
-}
+  };
 
+  useEffect(() => {
+    getUser();
+  }, []);
 
-useEffect(() => {
-  getUser()
-}, [])
   return (
-    <div style={{textAlign:"center"}}>
-        
-        <ImageUpload/>
-      </div>
-  )
-}
+    <div style={{ textAlign: "center" }}>
+      <ImageUpload />
+    </div>
+  );
+};
 
-export default Dashboard
+export default Dashboard;

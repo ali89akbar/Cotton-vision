@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
-import { useNavigate } from "react-router-dom";
 import {
-  AppBar,
-  Toolbar,
-  Typography,
   Container,
   Card,
   CircularProgress,
@@ -12,143 +8,215 @@ import {
   TextField,
   Chip,
   Box,
-  Divider,
+  Typography,
+  Grid,
 } from "@material-ui/core";
 import { DropzoneArea } from "material-ui-dropzone";
+import {
+  FaCloudSun,
+  FaWind,
+  FaTint,
+  FaFlask,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaClock,
+  FaSearchLocation,
+  FaRedo,
+  FaShieldAlt,
+  FaInfoCircle,
+} from "react-icons/fa";
 import axios from "axios";
 
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
     minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f4f6f8",
-    padding: theme.spacing(3),
+    paddingTop: theme.spacing(5),
+    paddingBottom: theme.spacing(8),
+    background: "linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)",
   },
-  card: {
-    maxWidth: 780,
+  glassCard: {
+    maxWidth: 920,
     width: "100%",
     margin: "auto",
     padding: theme.spacing(4),
-    textAlign: "center",
-    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
-    borderRadius: "24px",
-    backgroundColor: "#ffffff",
+    background: "rgba(255, 255, 255, 0.95)",
+    backdropFilter: "blur(20px)",
+    borderRadius: "28px",
+    boxShadow: "0 25px 50px -12px rgba(5, 150, 105, 0.15)",
+    border: "1px solid rgba(209, 250, 229, 0.8)",
   },
-  titleHeader: {
-    fontWeight: 700,
-    color: "#1b5e20",
+  headerSection: {
+    textAlign: "center",
+    marginBottom: theme.spacing(4),
+  },
+  mainTitle: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 800,
+    fontSize: "2.5rem",
+    background: "linear-gradient(135deg, #064e3b 0%, #059669 100%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
     marginBottom: theme.spacing(1),
   },
   subtitle: {
-    color: "#555",
-    marginBottom: theme.spacing(3),
+    color: "#475569",
+    fontSize: "1.05rem",
+    maxWidth: 680,
+    margin: "0 auto",
   },
-  cityInputContainer: {
-    marginBottom: theme.spacing(3),
+  statusBar: {
     display: "flex",
-    gap: theme.spacing(2),
     justifyContent: "center",
     alignItems: "center",
+    gap: theme.spacing(1.5),
+    marginTop: theme.spacing(2),
+    flexWrap: "wrap",
+  },
+  locationCard: {
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "20px",
+    padding: theme.spacing(2.5),
+    marginBottom: theme.spacing(3),
+  },
+  quickPillGroup: {
+    display: "flex",
+    gap: theme.spacing(1),
+    flexWrap: "wrap",
+    marginTop: theme.spacing(1.5),
+    alignItems: "center",
+  },
+  dropzoneCustom: {
+    border: "2px dashed #059669 !important",
+    borderRadius: "20px !important",
+    background: "#f0fdf4 !important",
+    minHeight: "220px !important",
+    display: "flex !important",
+    alignItems: "center !important",
+    justifyContent: "center !important",
+    cursor: "pointer !important",
+    transition: "all 0.3s ease !important",
+    "&:hover": {
+      background: "#d1fae5 !important",
+      borderColor: "#047857 !important",
+      transform: "scale(1.01)",
+    },
+  },
+  loadingContainer: {
+    textAlign: "center",
+    padding: theme.spacing(6),
   },
   loader: {
-    margin: theme.spacing(3),
-    color: "#2e7d32",
-  },
-  dataContainer: {
-    marginTop: theme.spacing(3),
-    padding: theme.spacing(3),
-    background: "#f8faf8",
-    border: "1px solid #c8e6c9",
-    borderRadius: "16px",
-    textAlign: "left",
-  },
-  headerSection: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    color: "#059669",
     marginBottom: theme.spacing(2),
-    flexWrap: "wrap",
-    gap: theme.spacing(1),
   },
-  diseaseTitle: {
+  resultsContainer: {
+    marginTop: theme.spacing(3),
+    animation: "$fadeInUp 0.5s ease-out forwards",
+  },
+  diseaseCard: {
+    background: "linear-gradient(135deg, #064e3b 0%, #047857 100%)",
+    color: "#ffffff",
+    padding: theme.spacing(3),
+    borderRadius: "20px",
+    boxShadow: "0 10px 25px rgba(4, 120, 87, 0.25)",
+    marginBottom: theme.spacing(3),
+  },
+  urduHeader: {
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: "1.5rem",
     fontWeight: 700,
-    fontSize: "22px",
-    color: "#1b5e20",
-  },
-  urduTitle: {
-    fontSize: "20px",
-    fontWeight: 600,
-    color: "#2e7d32",
+    color: "#a7f3d0",
     direction: "rtl",
     marginBottom: theme.spacing(1),
   },
-  dataRow: {
-    marginBottom: theme.spacing(2),
-    fontSize: "15px",
-    lineHeight: "1.6",
+  remedyCard: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "20px",
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.04)",
   },
-  dataLabel: {
+  remedyTitle: {
+    fontFamily: "'Outfit', sans-serif",
     fontWeight: 700,
-    marginRight: theme.spacing(1),
-    color: "#333",
+    color: "#064e3b",
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(2),
   },
-  chemicalBox: {
-    background: "#e8f5e9",
-    borderLeft: "5px solid #2e7d32",
-    padding: theme.spacing(2),
-    borderRadius: "8px",
-    marginTop: theme.spacing(1.5),
-    marginBottom: theme.spacing(1.5),
-  },
-  weatherWarningBox: {
-    background: "#fff3e0",
-    borderLeft: "5px solid #ef6c00",
-    padding: theme.spacing(2),
-    borderRadius: "8px",
+  infoGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: theme.spacing(2),
     marginTop: theme.spacing(2),
-    color: "#e65100",
+  },
+  infoBox: {
+    background: "#f8fafc",
+    padding: theme.spacing(2),
+    borderRadius: "14px",
+    border: "1px solid #f1f5f9",
+  },
+  weatherCard: {
+    borderRadius: "20px",
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+    transition: "all 0.3s ease",
+  },
+  weatherSafe: {
+    background: "linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%)",
+    border: "1.5px solid #a7f3d0",
+  },
+  weatherPostponed: {
+    background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+    border: "1.5px solid #fed7aa",
+  },
+  weatherMetric: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    background: "rgba(255, 255, 255, 0.8)",
+    padding: theme.spacing(1.5, 2),
+    borderRadius: "12px",
+    fontSize: "0.95rem",
     fontWeight: 600,
   },
-  lowConfidenceBox: {
-    background: "#ffebee",
-    borderLeft: "5px solid #c62828",
-    padding: theme.spacing(2.5),
-    borderRadius: "12px",
-    color: "#c62828",
+  lowConfidenceAlert: {
+    background: "#fef2f2",
+    border: "1.5px solid #fecaca",
+    borderRadius: "20px",
+    padding: theme.spacing(3),
+    color: "#991b1b",
     textAlign: "left",
-    marginTop: theme.spacing(2),
-  },
-  buttonGroup: {
-    display: "flex",
-    justifyContent: "center",
-    marginTop: theme.spacing(3),
-    gap: theme.spacing(2),
-    flexWrap: "wrap",
+    marginBottom: theme.spacing(3),
   },
   actionButton: {
-    minWidth: "140px",
     borderRadius: "30px",
-    padding: "10px 24px",
-    fontSize: "14px",
-    fontWeight: 600,
+    padding: "12px 32px",
+    fontSize: "1rem",
+    fontWeight: 700,
+    fontFamily: "'Outfit', sans-serif",
     textTransform: "uppercase",
+    background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+    color: "#ffffff",
+    boxShadow: "0 8px 20px rgba(5, 150, 105, 0.3)",
+    "&:hover": {
+      background: "linear-gradient(135deg, #047857 0%, #059669 100%)",
+      boxShadow: "0 12px 25px rgba(5, 150, 105, 0.4)",
+    },
+  },
+  "@keyframes fadeInUp": {
+    from: { opacity: 0, transform: "translateY(20px)" },
+    to: { opacity: 1, transform: "translateY(0)" },
   },
 }));
 
-const ColorButton = withStyles((theme) => ({
-  root: {
-    color: "#fff",
-    backgroundColor: "#2e7d32",
-    "&:hover": {
-      backgroundColor: "#1b5e20",
-    },
-  },
-}))(Button);
+const SINDH_CITIES = ["Khairpur", "Sukkur", "Gambat", "Kot Diji", "Ghotki", "Rohri"];
 
 export const ImageUpload = () => {
-  const navigate = useNavigate();
   const classes = useStyles();
 
   const [selectedFile, setSelectedFile] = useState(null);
@@ -170,7 +238,7 @@ export const ImageUpload = () => {
     setData(null);
   };
 
-  const sendFile = async (fileToUpload = selectedFile) => {
+  const sendFile = async (fileToUpload = selectedFile, cityToUse = cityName) => {
     if (!fileToUpload) return;
 
     const formData = new FormData();
@@ -179,7 +247,7 @@ export const ImageUpload = () => {
 
     try {
       const response = await axiosInstance.post(
-        `/predict?city=${encodeURIComponent(cityName)}&confidence_threshold=0.70`,
+        `/predict?city=${encodeURIComponent(cityToUse)}&confidence_threshold=0.70`,
         formData
       );
       if (response.status === 200) {
@@ -187,9 +255,16 @@ export const ImageUpload = () => {
       }
     } catch (error) {
       console.error("Error sending file:", error);
-      alert("Error connecting to Plantwise Model API server (http://localhost:8000). Ensure main.py is running.");
+      alert("Unable to connect to Plantwise Model API server (http://localhost:8000). Please ensure main.py is running.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleQuickCitySelect = (city) => {
+    setCityName(city);
+    if (selectedFile) {
+      sendFile(selectedFile, city);
     }
   };
 
@@ -200,197 +275,293 @@ export const ImageUpload = () => {
 
   useEffect(() => {
     if (selectedFile) {
-      sendFile(selectedFile);
+      sendFile(selectedFile, cityName);
     }
   }, [selectedFile]);
 
-  const getUrgencyChipColor = (urgency) => {
+  const getUrgencyChipProps = (urgency) => {
     switch (urgency) {
       case "CRITICAL":
-        return { bg: "#d32f2f", text: "#fff" };
+        return { label: "CRITICAL URGENCY", style: { background: "#ef4444", color: "#fff", fontWeight: 800 } };
       case "HIGH":
-        return { bg: "#f57c00", text: "#fff" };
+        return { label: "HIGH URGENCY", style: { background: "#f97316", color: "#fff", fontWeight: 800 } };
       case "MODERATE_TO_HIGH":
       case "MODERATE":
-        return { bg: "#fbc02d", text: "#000" };
+        return { label: "MODERATE URGENCY", style: { background: "#eab308", color: "#000", fontWeight: 800 } };
       default:
-        return { bg: "#388e3c", text: "#fff" };
+        return { label: "LOW URGENCY", style: { background: "#10b981", color: "#fff", fontWeight: 800 } };
     }
   };
 
-  const weatherSafety = data?.weather_safety_advisory || data?.weather_safety_khairpur;
+  const weatherInfo = data?.weather_safety_advisory || data?.weather_safety_khairpur;
 
   return (
-    <>
-      <AppBar position="static" style={{ background: "#1b5e20" }}>
-        <Toolbar>
-          <Typography variant="h6" style={{ fontWeight: 700, flexGrow: 1 }}>
-            🌱 Plantwise Detection - Cotton Crop Decision Engine
-          </Typography>
-          <Typography variant="subtitle2" style={{ color: "#a5d6a7" }}>
-            {data?.region || `${cityName}, Sindh, Pakistan`}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      <Container className={classes.mainContainer}>
-        <Card className={classes.card}>
-          <Typography variant="h4" className={classes.titleHeader}>
-            Cotton Leaf Disease Detection
+    <Container className={classes.mainContainer}>
+      <Card className={classes.glassCard}>
+        {/* HEADER SECTION */}
+        <div className={classes.headerSection}>
+          <Typography variant="h3" className={classes.mainTitle}>
+            Plantwise AI Diagnostics
           </Typography>
           <Typography variant="body1" className={classes.subtitle}>
-            Upload a cotton leaf photo for instant disease diagnosis, per-acre chemical dosage, and real-time weather spray advisories.
+            Target Crop: <strong>Cotton (Gossypium hirsutum)</strong> | Real-Time Agronomic Spray Advisory & Weather Safety Engine
           </Typography>
 
-          <div className={classes.cityInputContainer}>
-            <TextField
-              label="Location City / Village"
+          <div className={classes.statusBar}>
+            <Chip
+              icon={<FaShieldAlt style={{ color: "#059669" }} />}
+              label="OpenWeatherMap API Connected"
               variant="outlined"
               size="small"
-              value={cityName}
-              onChange={(e) => setCityName(e.target.value)}
-              placeholder="e.g. Sukkur, Khairpur, Gambat, Kot Diji"
-              helperText="Live weather will be automatically fetched for this location"
-              style={{ minWidth: 300 }}
+              style={{ borderColor: "#a7f3d0", fontWeight: 600 }}
+            />
+            <Chip
+              icon={<FaCheckCircle style={{ color: "#10b981" }} />}
+              label="TFLite & Keras Model Active"
+              variant="outlined"
+              size="small"
+              style={{ borderColor: "#a7f3d0", fontWeight: 600 }}
             />
           </div>
+        </div>
 
-          {!selectedFile && (
-            <DropzoneArea
-              acceptedFiles={["image/*"]}
-              dropzoneText={"Drag and drop a cotton leaf image here, or click to browse"}
-              onChange={handleFileChange}
-              filesLimit={1}
-              showAlerts={false}
-            />
-          )}
+        {/* LOCATION SELECTOR */}
+        <div className={classes.locationCard}>
+          <Box display="flex" alignItems="center" gridGap={10} mb={1}>
+            <FaSearchLocation style={{ color: "#059669", fontSize: "1.2rem" }} />
+            <Typography variant="subtitle1" style={{ fontWeight: 700, color: "#0f172a" }}>
+              Target Field Location (City / Village)
+            </Typography>
+          </Box>
 
-          {isLoading && (
-            <div>
-              <CircularProgress className={classes.loader} />
-              <Typography variant="h6" style={{ color: "#2e7d32" }}>
-                Running AI model inference & fetching live {cityName} weather...
-              </Typography>
-            </div>
-          )}
+          <TextField
+            fullWidth
+            variant="outlined"
+            size="small"
+            value={cityName}
+            onChange={(e) => setCityName(e.target.value)}
+            placeholder="Type city or village name e.g. Khairpur, Sukkur, Gambat..."
+            helperText="Live weather parameters will be automatically fetched for this exact location"
+            style={{ background: "#ffffff", borderRadius: "10px" }}
+          />
 
-          {/* LOW CONFIDENCE RESPONSE */}
-          {data && data.status === "LOW_CONFIDENCE" && (
-            <div className={classes.lowConfidenceBox}>
-              <Typography variant="h6" style={{ fontWeight: 700, marginBottom: 8 }}>
-                ⚠️ Low Prediction Confidence ({(data.confidence * 100).toFixed(1)}%)
-              </Typography>
-              <Typography variant="subtitle2" style={{ fontWeight: 600, color: "#b71c1c", marginBottom: 8 }}>
-                Region: {data.region}
-              </Typography>
-              <Typography variant="body1">
-                {data.action_required}
-              </Typography>
-            </div>
-          )}
+          <div className={classes.quickPillGroup}>
+            <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
+              Quick Select Sindh Locations:
+            </Typography>
+            {SINDH_CITIES.map((city) => (
+              <Chip
+                key={city}
+                label={city}
+                clickable
+                size="small"
+                color={cityName.toLowerCase() === city.toLowerCase() ? "primary" : "default"}
+                onClick={() => handleQuickCitySelect(city)}
+                style={{
+                  fontWeight: 600,
+                  backgroundColor: cityName.toLowerCase() === city.toLowerCase() ? "#059669" : "#e2e8f0",
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
-          {/* SUCCESS ADVISORY RESPONSE */}
-          {data && data.status === "SUCCESS" && (
-            <div className={classes.dataContainer}>
-              <div className={classes.headerSection}>
-                <div>
-                  <Typography className={classes.diseaseTitle}>
-                    {data.diagnosis.predicted_class}
+        {/* DROPZONE UPLOAD AREA */}
+        {!selectedFile && (
+          <DropzoneArea
+            acceptedFiles={["image/*"]}
+            dropzoneText={"📸 Drag & Drop a cotton leaf photo here, or click to browse files"}
+            onChange={handleFileChange}
+            filesLimit={1}
+            showAlerts={false}
+            dropzoneClass={classes.dropzoneCustom}
+          />
+        )}
+
+        {/* LOADING SPINNER */}
+        {isLoading && (
+          <div className={classes.loadingContainer}>
+            <CircularProgress size={56} className={classes.loader} />
+            <Typography variant="h6" style={{ fontWeight: 700, color: "#064e3b" }}>
+              Running AI Neural Network & Fetching Live {cityName} Weather...
+            </Typography>
+            <Typography variant="body2" style={{ color: "#64748b", marginTop: 4 }}>
+              Analyzing leaf pathogens and evaluating agronomic spray guardrails
+            </Typography>
+          </div>
+        )}
+
+        {/* RESULTS PANEL */}
+        {data && !isLoading && (
+          <div className={classes.resultsContainer}>
+            {/* LOW CONFIDENCE ALERT */}
+            {data.status === "LOW_CONFIDENCE" && (
+              <div className={classes.lowConfidenceAlert}>
+                <Box display="flex" alignItems="center" gridGap={10} mb={1}>
+                  <FaExclamationTriangle style={{ fontSize: "1.5rem", color: "#dc2626" }} />
+                  <Typography variant="h6" style={{ fontWeight: 800 }}>
+                    Low Confidence Safeguard Activated ({(data.confidence * 100).toFixed(1)}%)
                   </Typography>
-                  <Typography className={classes.urduTitle}>
-                    {data.diagnosis.disease_name_urdu}
-                  </Typography>
-                  <Typography variant="caption" style={{ color: "#2e7d32", fontWeight: 600 }}>
-                    Target Region: {data.region}
-                  </Typography>
-                </div>
-                <Box display="flex" alignItems="center" gridGap={8}>
-                  <Chip
-                    label={`Urgency: ${data.actionable_decision.urgency_level}`}
-                    style={{
-                      backgroundColor: getUrgencyChipColor(data.actionable_decision.urgency_level).bg,
-                      color: getUrgencyChipColor(data.actionable_decision.urgency_level).text,
-                      fontWeight: 700,
-                    }}
-                  />
-                  <Chip
-                    label={`Confidence: ${data.diagnosis.confidence_percentage}%`}
-                    color="primary"
-                    variant="outlined"
-                    style={{ fontWeight: 700 }}
-                  />
                 </Box>
-              </div>
-
-              <Divider style={{ margin: "16px 0" }} />
-
-              <div className={classes.chemicalBox}>
-                <Typography variant="h6" style={{ fontWeight: 700, color: "#1b5e20", marginBottom: 6 }}>
-                  💊 Actionable Chemical Remedy
+                <Typography variant="subtitle2" style={{ fontWeight: 700, color: "#7f1d1d", mb: 1 }}>
+                  Location Assessed: {data.region}
                 </Typography>
-                <div className={classes.dataRow}>
-                  <span className={classes.dataLabel}>Spray Formulation:</span>
-                  <span>{data.actionable_decision.chemical_recommendation}</span>
-                </div>
-                <div className={classes.dataRow}>
-                  <span className={classes.dataLabel}>Dosage Per Acre:</span>
-                  <span>{data.actionable_decision.dosage_per_acre}</span>
-                </div>
-                <div className={classes.dataRow}>
-                  <span className={classes.dataLabel}>Application Timing:</span>
-                  <span>{data.actionable_decision.application_instructions}</span>
-                </div>
+                <Typography variant="body1">{data.action_required}</Typography>
               </div>
+            )}
 
-              <div className={classes.dataRow}>
-                <span className={classes.dataLabel}>Agronomic Context:</span>
-                <span>{data.actionable_decision.agronomic_context_sindh}</span>
-              </div>
+            {/* SUCCESS ADVISORY */}
+            {data.status === "SUCCESS" && (
+              <>
+                {/* DISEASE HEADER CARD */}
+                <div className={classes.diseaseCard}>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gridGap={16}>
+                    <div>
+                      <Typography variant="caption" style={{ textTransform: "uppercase", letterSpacing: "1px", opacity: 0.9 }}>
+                        Detected Pathogen / Condition
+                      </Typography>
+                      <Typography variant="h4" style={{ fontWeight: 800, marginTop: 2 }}>
+                        {data.diagnosis.predicted_class}
+                      </Typography>
+                      <div className={classes.urduHeader}>
+                        {data.diagnosis.disease_name_urdu}
+                      </div>
+                      <Typography variant="subtitle2" style={{ opacity: 0.95 }}>
+                        📍 Location: <strong>{data.region}</strong>
+                      </Typography>
+                    </div>
 
-              {/* WEATHER SAFETY ADVISORY SECTION */}
-              {weatherSafety && (
-                <div className={weatherSafety.can_spray ? classes.chemicalBox : classes.weatherWarningBox}>
-                  <Typography variant="h6" style={{ fontWeight: 700, marginBottom: 6 }}>
-                    🌦️ Live Weather Spray Safety for {data.region} ({weatherSafety.conditions_assessed.temperature_c}°C, {weatherSafety.conditions_assessed.wind_speed_kmh} km/h wind, {weatherSafety.conditions_assessed.humidity_pct}% humidity)
+                    <Box display="flex" flexDirection="column" alignItems="flex-end" gridGap={8}>
+                      <Chip {...getUrgencyChipProps(data.actionable_decision.urgency_level)} />
+                      <Chip
+                        label={`Match Confidence: ${data.diagnosis.confidence_percentage}%`}
+                        style={{ background: "rgba(255, 255, 255, 0.2)", color: "#fff", fontWeight: 700 }}
+                      />
+                    </Box>
+                  </Box>
+                </div>
+
+                {/* CHEMICAL REMEDY CARD */}
+                <div className={classes.remedyCard}>
+                  <Typography variant="h5" className={classes.remedyTitle}>
+                    <FaFlask style={{ color: "#059669" }} /> Precise Agronomic Spray Recommendation
                   </Typography>
 
-                  <div className={classes.dataRow}>
-                    <span className={classes.dataLabel}>Spray Status:</span>
-                    <span>{weatherSafety.can_spray ? "✅ SAFE TO SPRAY" : "⛔ SPRAYING TEMPORARILY POSTPONED"}</span>
-                  </div>
-
-                  <div className={classes.dataRow}>
-                    <span className={classes.dataLabel}>Recommended Time Window:</span>
-                    <span>{weatherSafety.recommended_window}</span>
-                  </div>
-
-                  {weatherSafety.weather_warnings && weatherSafety.weather_warnings.length > 0 && (
-                    <div style={{ marginTop: 8 }}>
-                      {weatherSafety.weather_warnings.map((warn, i) => (
-                        <div key={i} style={{ color: "#d84315", fontWeight: 700 }}>
-                          • {warn}
-                        </div>
-                      ))}
+                  <div className={classes.infoGrid}>
+                    <div className={classes.infoBox}>
+                      <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
+                        FORMULATION & CHEMICAL
+                      </Typography>
+                      <Typography variant="body1" style={{ fontWeight: 700, color: "#064e3b", marginTop: 4 }}>
+                        {data.actionable_decision.chemical_recommendation}
+                      </Typography>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
 
-          {data && (
-            <div className={classes.buttonGroup}>
-              <ColorButton
+                    <div className={classes.infoBox}>
+                      <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
+                        DOSAGE PER ACRE
+                      </Typography>
+                      <Typography variant="body1" style={{ fontWeight: 700, color: "#064e3b", marginTop: 4 }}>
+                        {data.actionable_decision.dosage_per_acre}
+                      </Typography>
+                    </div>
+                  </div>
+
+                  <Box mt={2} className={classes.infoBox}>
+                    <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
+                      APPLICATION METHOD & INSTRUCTIONS
+                    </Typography>
+                    <Typography variant="body1" style={{ color: "#1e293b", marginTop: 4 }}>
+                      {data.actionable_decision.application_instructions}
+                    </Typography>
+                  </Box>
+
+                  <Box mt={2} className={classes.infoBox} style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+                    <Typography variant="caption" style={{ fontWeight: 700, color: "#047857" }}>
+                      AGRICULTURAL FIELD CONTEXT (SINDH)
+                    </Typography>
+                    <Typography variant="body2" style={{ color: "#064e3b", marginTop: 4 }}>
+                      {data.actionable_decision.agronomic_context_sindh}
+                    </Typography>
+                  </Box>
+                </div>
+
+                {/* LIVE WEATHER SAFETY WIDGET */}
+                {weatherInfo && (
+                  <div className={`${classes.weatherCard} ${weatherInfo.can_spray ? classes.weatherSafe : classes.weatherPostponed}`}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gridGap={12} mb={2}>
+                      <Typography variant="h6" style={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}>
+                        <FaCloudSun style={{ color: weatherInfo.can_spray ? "#059669" : "#ea580c" }} />
+                        Real-Time Weather Safety ({weatherInfo.conditions_assessed.temperature_c}°C, {weatherInfo.conditions_assessed.wind_speed_kmh} km/h wind)
+                      </Typography>
+
+                      <Chip
+                        icon={weatherInfo.can_spray ? <FaCheckCircle /> : <FaTimesCircle />}
+                        label={weatherInfo.can_spray ? "✅ SAFE TO SPRAY" : "⛔ SPRAYING POSTPONED"}
+                        style={{
+                          background: weatherInfo.can_spray ? "#059669" : "#dc2626",
+                          color: "#fff",
+                          fontWeight: 800,
+                        }}
+                      />
+                    </Box>
+
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={4}>
+                        <div className={classes.weatherMetric}>
+                          <FaCloudSun style={{ color: "#eab308" }} />
+                          <span>Temp: {weatherInfo.conditions_assessed.temperature_c}°C</span>
+                        </div>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <div className={classes.weatherMetric}>
+                          <FaWind style={{ color: "#0284c7" }} />
+                          <span>Wind: {weatherInfo.conditions_assessed.wind_speed_kmh} km/h</span>
+                        </div>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <div className={classes.weatherMetric}>
+                          <FaTint style={{ color: "#2563eb" }} />
+                          <span>Humidity: {weatherInfo.conditions_assessed.humidity_pct}%</span>
+                        </div>
+                      </Grid>
+                    </Grid>
+
+                    <Box mt={2} display="flex" alignItems="center" gridGap={8}>
+                      <FaClock style={{ color: "#475569" }} />
+                      <Typography variant="body2" style={{ fontWeight: 700, color: "#334155" }}>
+                        Recommended Time Window: {weatherInfo.recommended_window}
+                      </Typography>
+                    </Box>
+
+                    {weatherInfo.weather_warnings && weatherInfo.weather_warnings.length > 0 && (
+                      <Box mt={2} p={1.5} borderRadius={8} style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid #fca5a5" }}>
+                        {weatherInfo.weather_warnings.map((warn, idx) => (
+                          <Typography key={idx} variant="body2" style={{ color: "#991b1b", fontWeight: 700 }}>
+                            ⚠️ {warn}
+                          </Typography>
+                        ))}
+                      </Box>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ACTION BUTTON */}
+            <Box textAlign="center" mt={4}>
+              <Button
                 variant="contained"
                 className={classes.actionButton}
                 onClick={clearData}
+                startIcon={<FaRedo />}
               >
-                Upload Another Photo
-              </ColorButton>
-            </div>
-          )}
-        </Card>
-      </Container>
-    </>
+                Upload Another Cotton Leaf Photo
+              </Button>
+            </Box>
+          </div>
+        )}
+      </Card>
+    </Container>
   );
 };

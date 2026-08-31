@@ -8,19 +8,27 @@ import os
 import requests
 from typing import Dict, Any, Optional
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# User OpenWeatherMap API Key (Reads from .env or uses default fallback key)
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "2c68cac827dd9e327fdd97b4e39326ed")
 
 KHAIRPUR_LAT = 27.5295
 KHAIRPUR_LON = 68.7592
 
 
-def fetch_open_weather_map(city_name: str, api_key: str = OPENWEATHER_API_KEY) -> Optional[Dict[str, Any]]:
+def fetch_open_weather_map(city_name: str, api_key: str = None) -> Optional[Dict[str, Any]]:
     """
     Attempts to fetch live weather from OpenWeatherMap API.
     """
+    active_key = api_key or os.getenv("OPENWEATHER_API_KEY", OPENWEATHER_API_KEY)
     try:
         query = f"{city_name},PK" if "," not in city_name else city_name
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={query}&appid={api_key}&units=metric"
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={query}&appid={active_key}&units=metric"
         response = requests.get(url, timeout=5)
 
         if response.status_code == 200:
@@ -109,7 +117,7 @@ def fetch_open_meteo_fallback(city_name: str) -> Dict[str, Any]:
 
 def get_current_weather(
     city_name: str = "Khairpur",
-    api_key: str = OPENWEATHER_API_KEY,
+    api_key: str = None,
 ) -> Dict[str, Any]:
     """
     Main function fetching live current weather for any city or village.
