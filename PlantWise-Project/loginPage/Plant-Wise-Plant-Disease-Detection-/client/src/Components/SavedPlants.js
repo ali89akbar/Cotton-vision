@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FiCheckCircle, FiAward, FiCheckSquare, FiSquare, FiLock } from "react-icons/fi";
 import styled, { keyframes } from "styled-components";
+import { useNotification } from './NotificationContext';
 
 // Modern color palette inspired by nature
 const colors = {
@@ -349,6 +350,7 @@ const SavedPlants = () => {
   const [predictions, setPredictions] = useState([]);
   const [checkedMap, setCheckedMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const notify = useNotification();
 
   const getStorageKey = (prediction, index) => {
     const id = prediction._id || prediction.className;
@@ -427,7 +429,10 @@ const SavedPlants = () => {
           { withCredentials: true }
         );
 
-        alert(`🎉 CONGRATULATIONS! You completed all point-wise recommendations for ${currentPlant.className}!\n\nNew Badge Earned: 🏆 ${currentPlant.className} Care Master Badge!\n\n🔒 This checklist is now permanently completed and locked.`);
+        notify.alert(
+          '🏆 Care Master Badge Earned!',
+          `Congratulations! You completed all point-wise recommendations for ${currentPlant.className}.\n\nThis checklist is now permanently completed and locked.`
+        );
 
         const updatedPredictions = [...predictions];
         updatedPredictions[plantIndex].badgeEarned = true;
@@ -542,7 +547,10 @@ const SavedPlants = () => {
                     <DateAdded>
                       Saved: {new Date(prediction.timestamp || Date.now()).toLocaleDateString()}
                     </DateAdded>
-                    <ViewRoutineButton onClick={() => alert(`Completed ${completedCount}/${steps.length} checklist steps for ${prediction.className}`)}>
+                    <ViewRoutineButton onClick={() => notify.info(
+                      'Checklist Progress',
+                      `Completed ${completedCount}/${steps.length} checklist steps for ${prediction.className}`
+                    )}>
                       <FiCheckCircle /> View Routine
                     </ViewRoutineButton>
                   </CardFooter>

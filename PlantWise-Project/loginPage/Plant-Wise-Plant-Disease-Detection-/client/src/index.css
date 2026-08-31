@@ -21,12 +21,19 @@
 
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Plus Jakarta Sans', sans-serif;
+
+  --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.35);
+  --transition-base: all 0.2s ease-in-out;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -36,10 +43,32 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  line-height: 1.25;
+}
+
+/* Global focus ring for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary-emerald);
+  outline-offset: 2px;
+}
+
+/* Smooth image loading */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Improved selection color */
+::selection {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--text-main);
 }
 
 /* Glassmorphism Utility */
@@ -101,4 +130,12 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb {
   background: #059669;
   border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #047857;
+}
+
+/* Smooth page transitions */
+main, [role="main"] {
+  animation: fadeInUp 0.3s ease-out;
 }

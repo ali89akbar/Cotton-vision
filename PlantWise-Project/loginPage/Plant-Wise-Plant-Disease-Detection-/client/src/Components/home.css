@@ -133,7 +133,7 @@
   border-radius: 24px;
   padding: 36px 28px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .feature-card:hover {
@@ -141,6 +141,18 @@
   box-shadow: 0 20px 40px rgba(5, 150, 105, 0.12);
   border-color: #a7f3d0;
   background: #ffffff;
+}
+
+.feature-card h3 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: #064e3b;
+  margin-bottom: 0.6rem;
+}
+
+.feature-card p {
+  color: #475569;
+  line-height: 1.65;
 }
 
 .feature-icon-badge {
@@ -173,6 +185,26 @@
   border-radius: 20px;
   text-align: center;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  transition: all 0.25s ease;
+}
+
+.step:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(5, 150, 105, 0.1);
+  border-color: #bbf7d0;
+}
+
+.step h3 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: #064e3b;
+  margin-bottom: 0.4rem;
+}
+
+.step p {
+  color: #64748b;
+  line-height: 1.6;
 }
 
 .step-number {
@@ -211,6 +243,13 @@
   padding: 32px 40px;
   border-radius: 20px;
   min-width: 180px;
+  transition: all 0.25s ease;
+}
+
+.stat-box:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(52, 211, 153, 0.5);
+  transform: translateY(-4px);
 }
 
 .stat-box h3 {
@@ -231,6 +270,12 @@
   font-size: 2.8rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
+  font-family: 'Outfit', sans-serif;
+}
+
+.primary-btn.large {
+  padding: 16px 40px;
+  font-size: 1.1rem;
 }
 
 @media (max-width: 768px) {

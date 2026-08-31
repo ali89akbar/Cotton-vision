@@ -1,4 +1,15 @@
-body{
-    width: 100%;
-    height: 100%;
+/* ═══════════════════════════════════════════════════════════════════
+   PlantWise – App Root
+   ═══════════════════════════════════════════════════════════════════ */
+
+body {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Ensure all routes animate in smoothly */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }

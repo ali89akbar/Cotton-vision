@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNotification } from './NotificationContext';
 import { makeStyles } from "@material-ui/core/styles";
 import {
   Container,
@@ -288,6 +289,7 @@ const LANGUAGES = [
 
 export const ImageUpload = () => {
   const classes = useStyles();
+  const notify = useNotification();
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [cityName, setCityName] = useState("Khairpur");
@@ -327,7 +329,7 @@ export const ImageUpload = () => {
       }
     } catch (error) {
       console.error("Error sending file:", error);
-      alert("Unable to connect to Plantwise Model API server (http://localhost:8000). Please ensure main.py is running.");
+      notify.error("Unable to connect to Plantwise Model API server. Please ensure main.py is running.");
     } finally {
       setIsLoading(false);
     }
@@ -354,10 +356,10 @@ export const ImageUpload = () => {
         withCredentials: true,
       });
 
-      alert(`✅ ${response.data.message || "Saved to MongoDB successfully!"}`);
+      notify.success(response.data.message || "Saved to MongoDB successfully!");
     } catch (error) {
       console.error("Error saving prediction to MongoDB:", error);
-      alert("Saved diagnosis to local history! Log in with Google to sync across devices.");
+      notify.warning("Saved to local history. Log in with Google to sync across devices.");
     } finally {
       setIsSaving(false);
     }

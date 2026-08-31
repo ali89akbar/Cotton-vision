@@ -10,11 +10,12 @@ import SocialMedia from './Components/SocialMedia';
 import BadgeProgressPage from './Components/BadgeProgressPage';
 import ARViewer from './Components/ARViewer';
 import PlantGallery from './Components/PlantGallery';
+import { NotificationProvider } from './Components/NotificationContext';
 
 
 function App() {
     return (
-        <>
+        <NotificationProvider>
             <Headers />
             <Routes>
                 <Route path="/" element={<Home />} />
@@ -27,7 +28,7 @@ function App() {
                 <Route path='/ar-viewer' element={<ARViewer />}/>
                 <Route path="*" element={<Error />} />
             </Routes>
-        </>
+        </NotificationProvider>
     );
 }
 

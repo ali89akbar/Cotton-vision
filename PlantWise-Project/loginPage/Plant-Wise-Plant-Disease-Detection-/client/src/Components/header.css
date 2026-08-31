@@ -74,6 +74,10 @@
   background: rgba(16, 185, 129, 0.15);
 }
 
+.nav-links li a.active {
+  box-shadow: inset 0 -2px 0 0 #10b981;
+}
+
 .model-pill {
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: white !important;
@@ -111,11 +115,18 @@
   font-size: 0.9rem;
   font-weight: 600;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
 .logout-btn:hover {
   background: #dc2626;
   color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.logout-btn:active {
+  transform: scale(0.96);
 }
 
 .menu-icon {
