@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FiSun, FiMoon, FiCheckCircle, FiX, FiAward, FiBookmark, FiShield, FiCheckSquare, FiSquare } from "react-icons/fi";
-import { GiPlantWatering, GiSpray, GiPlantSeed } from "react-icons/gi";
-import { MdOutlinePestControl } from "react-icons/md";
+import { FiCheckCircle, FiAward, FiCheckSquare, FiSquare, FiLock } from "react-icons/fi";
 import styled, { keyframes } from "styled-components";
 
 // Modern color palette inspired by nature
@@ -171,11 +169,12 @@ const ChecklistItem = styled.div`
   border-radius: 8px;
   background: ${props => props.checked ? '#e6f4ea' : '#ffffff'};
   border: 1px solid ${props => props.checked ? '#a8dab5' : '#f1f5f9'};
-  cursor: pointer;
+  cursor: ${props => props.locked ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.locked ? 0.9 : 1};
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #059669;
+    border-color: ${props => props.locked ? '#a8dab5' : '#059669'};
   }
 `;
 
@@ -320,7 +319,7 @@ const LoadingText = styled.p`
   font-size: 1rem;
 `;
 
-// Helper to generate 4 point-wise recommendation steps for check marks
+// Helper to generate 5 point-wise recommendation steps for check marks
 const getPointWiseSteps = (prediction) => {
   const steps = [];
 
@@ -351,6 +350,11 @@ const SavedPlants = () => {
   const [checkedMap, setCheckedMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
+  const getStorageKey = (prediction, index) => {
+    const id = prediction._id || prediction.className;
+    return `plantwise_checklist_${id}_${index}`;
+  };
+
   const fetchPredictions = async () => {
     try {
       setIsLoading(true);
@@ -360,11 +364,22 @@ const SavedPlants = () => {
       const data = predictionsRes.data || [];
       setPredictions(data);
 
-      // Initialize checked state map
+      // Restore checked states from localStorage or MongoDB badge status
       const initialChecked = {};
       data.forEach((p, pIdx) => {
         const steps = getPointWiseSteps(p);
-        initialChecked[pIdx] = steps.map(() => p.badgeEarned || false);
+        const key = getStorageKey(p, pIdx);
+        const savedJson = localStorage.getItem(key);
+
+        if (savedJson) {
+          try {
+            initialChecked[pIdx] = JSON.parse(savedJson);
+          } catch (e) {
+            initialChecked[pIdx] = steps.map(() => p.badgeEarned || false);
+          }
+        } else {
+          initialChecked[pIdx] = steps.map(() => p.badgeEarned || false);
+        }
       });
       setCheckedMap(initialChecked);
     } catch (error) {
@@ -381,8 +396,14 @@ const SavedPlants = () => {
   const handleStepToggle = async (plantIndex, stepIndex) => {
     const currentPlant = predictions[plantIndex];
     const steps = getPointWiseSteps(currentPlant);
-
     const currentPlantChecked = [...(checkedMap[plantIndex] || steps.map(() => false))];
+
+    // IF ALL ITEMS ARE ALREADY TICKS (COMPLETED & LOCKED), PREVENT ANY CHANGE!
+    const alreadyAllChecked = currentPlantChecked.length > 0 && currentPlantChecked.every(Boolean);
+    if (alreadyAllChecked || currentPlant.badgeEarned) {
+      return; // Locked! Cannot be modified once fully completed.
+    }
+
     currentPlantChecked[stepIndex] = !currentPlantChecked[stepIndex];
 
     const updatedCheckedMap = {
@@ -391,20 +412,23 @@ const SavedPlants = () => {
     };
     setCheckedMap(updatedCheckedMap);
 
-    const allChecked = currentPlantChecked.every(Boolean);
+    // Save to localStorage so check marks persist on refresh!
+    const key = getStorageKey(currentPlant, plantIndex);
+    localStorage.setItem(key, JSON.stringify(currentPlantChecked));
 
-    // If ALL check marks are checked, award badge!
-    if (allChecked && !currentPlant.badgeEarned) {
+    const nowAllChecked = currentPlantChecked.every(Boolean);
+
+    // If ALL check marks are now checked, award badge and LOCK!
+    if (nowAllChecked && !currentPlant.badgeEarned) {
       try {
-        const response = await axios.post(
+        await axios.post(
           "http://localhost:6005/api/user/mark-care",
           { className: currentPlant.className, routineType: "morning" },
           { withCredentials: true }
         );
 
-        alert(`🎉 CONGRATULATIONS! You completed all point-wise recommendations for ${currentPlant.className}!\n\nNew Badge Earned: 🏆 ${currentPlant.className} Care Master Badge!`);
+        alert(`🎉 CONGRATULATIONS! You completed all point-wise recommendations for ${currentPlant.className}!\n\nNew Badge Earned: 🏆 ${currentPlant.className} Care Master Badge!\n\n🔒 This checklist is now permanently completed and locked.`);
 
-        // Update local state to reflect badge earned
         const updatedPredictions = [...predictions];
         updatedPredictions[plantIndex].badgeEarned = true;
         setPredictions(updatedPredictions);
@@ -439,6 +463,7 @@ const SavedPlants = () => {
             const plantChecked = checkedMap[pIdx] || steps.map(() => false);
             const completedCount = plantChecked.filter(Boolean).length;
             const progressPercent = Math.round((completedCount / steps.length) * 100);
+            const isFullyCompleted = (completedCount === steps.length && steps.length > 0) || prediction.badgeEarned;
 
             return (
               <PlantCard key={pIdx}>
@@ -464,9 +489,15 @@ const SavedPlants = () => {
                   <ChecklistSection>
                     <ChecklistHeader>
                       <span>📋 Point-Wise Recommendation Checklist</span>
-                      <span style={{ fontSize: "0.82rem", color: "#059669" }}>
-                        {completedCount}/{steps.length} Done
-                      </span>
+                      {isFullyCompleted ? (
+                        <span style={{ fontSize: "0.82rem", color: "#059669", fontWeight: 800, display: "flex", alignItems: "center", gap: 4 }}>
+                          <FiLock /> 🔒 Completed & Locked
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: "0.82rem", color: "#059669" }}>
+                          {completedCount}/{steps.length} Done
+                        </span>
+                      )}
                     </ChecklistHeader>
 
                     <ChecklistList>
@@ -476,6 +507,7 @@ const SavedPlants = () => {
                           <ChecklistItem
                             key={sIdx}
                             checked={isChecked}
+                            locked={isFullyCompleted}
                             onClick={() => handleStepToggle(pIdx, sIdx)}
                           >
                             <CheckIcon checked={isChecked}>
@@ -499,7 +531,7 @@ const SavedPlants = () => {
                     </ProgressText>
                   </ProgressContainer>
 
-                  {(prediction.badgeEarned || progressPercent === 100) && (
+                  {isFullyCompleted && (
                     <BadgeEarnedBanner>
                       <FiAward style={{ fontSize: "1.2rem", color: "#d97706" }} />
                       🏆 {prediction.className} Care Master Badge Earned!
@@ -510,7 +542,7 @@ const SavedPlants = () => {
                     <DateAdded>
                       Saved: {new Date(prediction.timestamp || Date.now()).toLocaleDateString()}
                     </DateAdded>
-                    <ViewRoutineButton onClick={() => alert(`Showing point-wise checklist for ${prediction.className}`)}>
+                    <ViewRoutineButton onClick={() => alert(`Completed ${completedCount}/${steps.length} checklist steps for ${prediction.className}`)}>
                       <FiCheckCircle /> View Routine
                     </ViewRoutineButton>
                   </CardFooter>
