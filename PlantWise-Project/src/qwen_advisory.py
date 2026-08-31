@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 DASHSCOPE_BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
 MODEL_NAME = "qwen-plus"
-TIMEOUT_SECONDS = 10.0
+TIMEOUT_SECONDS = 2.5
 PLACEHOLDER_KEYS = {"", "your_key_here", "your_dashscope_qwen_api_key_here", "none", "null"}
 
 # Supported Regional Languages Mapping
@@ -162,7 +162,7 @@ def get_advisory(
         f"Provide practical farmer advice and urgency level in JSON format strictly in {lang_name} ({lang_native}) language."
     )
 
-    max_attempts = 2
+    max_attempts = 1
     for attempt in range(1, max_attempts + 1):
         try:
             response = client.chat.completions.create(
