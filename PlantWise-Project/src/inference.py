@@ -157,12 +157,13 @@ def get_farmer_recommendation(
     image_path_or_bytes: Union[str, bytes, Image.Image],
     confidence_threshold: float = 0.70,
     weather_data: Optional[Dict[str, Any]] = None,
+    language: str = "en",
     model_path: str = "models/best_cotton_model.keras",
     tflite_path: str = "models/cotton_disease_model.tflite",
 ) -> Dict[str, Any]:
     """
     Main inference interface function. Receives leaf image input, predicts disease class,
-    evaluates confidence and Khairpur weather safety, and returns structured JSON advisory.
+    evaluates confidence and weather safety, and returns structured JSON advisory in chosen language.
     """
     predicted_class, confidence = predict_image(
         image_input=image_path_or_bytes,
@@ -175,6 +176,7 @@ def get_farmer_recommendation(
         confidence=confidence,
         confidence_threshold=confidence_threshold,
         weather_data=weather_data,
+        language=language,
     )
 
     return advisory_json

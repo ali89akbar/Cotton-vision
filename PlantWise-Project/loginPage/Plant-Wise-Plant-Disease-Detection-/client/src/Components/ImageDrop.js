@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { makeStyles, withStyles } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import {
   Container,
   Card,
@@ -24,7 +24,8 @@ import {
   FaSearchLocation,
   FaRedo,
   FaShieldAlt,
-  FaInfoCircle,
+  FaLanguage,
+  FaBrain,
 } from "react-icons/fa";
 import axios from "axios";
 
@@ -36,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
     background: "linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)",
   },
   glassCard: {
-    maxWidth: 920,
+    maxWidth: 960,
     width: "100%",
     margin: "auto",
     padding: theme.spacing(4),
@@ -74,11 +75,36 @@ const useStyles = makeStyles((theme) => ({
     flexWrap: "wrap",
   },
   locationCard: {
-    background: "#f8fafc",
+    background: "#ffffff",
     border: "1px solid #e2e8f0",
     borderRadius: "20px",
-    padding: theme.spacing(2.5),
-    marginBottom: theme.spacing(3),
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(2.5),
+    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.03)",
+  },
+  languageCard: {
+    background: "linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%)",
+    border: "1.5px solid #c8e6c9",
+    borderRadius: "20px",
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3.5),
+    boxShadow: "0 6px 18px rgba(5, 150, 105, 0.06)",
+  },
+  langButtonContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: theme.spacing(1.2),
+    marginTop: theme.spacing(1.5),
+  },
+  langPill: {
+    padding: "8px 18px !important",
+    height: "auto !important",
+    borderRadius: "25px !important",
+    fontWeight: "700 !important",
+    fontSize: "0.92rem !important",
+    fontFamily: "'Outfit', sans-serif !important",
+    transition: "all 0.25s ease !important",
+    cursor: "pointer !important",
   },
   quickPillGroup: {
     display: "flex",
@@ -125,17 +151,37 @@ const useStyles = makeStyles((theme) => ({
   },
   urduHeader: {
     fontFamily: "'Outfit', sans-serif",
-    fontSize: "1.5rem",
+    fontSize: "1.6rem",
     fontWeight: 700,
     color: "#a7f3d0",
     direction: "rtl",
     marginBottom: theme.spacing(1),
   },
+  qwenAdvisoryCard: {
+    background: "linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%)",
+    border: "2px solid #34d399",
+    borderRadius: "20px",
+    padding: theme.spacing(3.5),
+    marginBottom: theme.spacing(3),
+    boxShadow: "0 8px 20px rgba(5, 150, 105, 0.15)",
+  },
+  qwenRtlText: {
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: "1.3rem",
+    fontWeight: 700,
+    color: "#064e3b",
+    direction: "rtl",
+    lineHeight: "1.85",
+    marginTop: theme.spacing(2),
+    padding: theme.spacing(2),
+    background: "rgba(255, 255, 255, 0.7)",
+    borderRadius: "14px",
+  },
   remedyCard: {
     background: "#ffffff",
     border: "1px solid #e2e8f0",
     borderRadius: "20px",
-    padding: theme.spacing(3),
+    padding: theme.spacing(3.5),
     marginBottom: theme.spacing(3),
     boxShadow: "0 4px 15px rgba(0, 0, 0, 0.04)",
   },
@@ -156,13 +202,13 @@ const useStyles = makeStyles((theme) => ({
   },
   infoBox: {
     background: "#f8fafc",
-    padding: theme.spacing(2),
+    padding: theme.spacing(2.5),
     borderRadius: "14px",
     border: "1px solid #f1f5f9",
   },
   weatherCard: {
     borderRadius: "20px",
-    padding: theme.spacing(3),
+    padding: theme.spacing(3.5),
     marginBottom: theme.spacing(3),
     transition: "all 0.3s ease",
   },
@@ -178,9 +224,9 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     gap: theme.spacing(1),
-    background: "rgba(255, 255, 255, 0.8)",
-    padding: theme.spacing(1.5, 2),
-    borderRadius: "12px",
+    background: "rgba(255, 255, 255, 0.85)",
+    padding: theme.spacing(1.5, 2.5),
+    borderRadius: "14px",
     fontSize: "0.95rem",
     fontWeight: 600,
   },
@@ -216,11 +262,21 @@ const useStyles = makeStyles((theme) => ({
 
 const SINDH_CITIES = ["Khairpur", "Sukkur", "Gambat", "Kot Diji", "Ghotki", "Rohri"];
 
+const LANGUAGES = [
+  { code: "en", name: "English", label: "🇬🇧 English" },
+  { code: "ur", name: "Urdu", label: "🇵🇰 اردو (Urdu)" },
+  { code: "sd", name: "Sindhi", label: "🌾 سنڌي (Sindhi)" },
+  { code: "pa", name: "Punjabi", label: "🌾 پنجابی (Punjabi)" },
+  { code: "skr", name: "Saraiki", label: "🌾 سرائیکی (Saraiki)" },
+  { code: "ps", name: "Pashto", label: "🌾 پښتو (Pashto)" },
+];
+
 export const ImageUpload = () => {
   const classes = useStyles();
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [cityName, setCityName] = useState("Khairpur");
+  const [language, setLanguage] = useState("en");
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -238,7 +294,7 @@ export const ImageUpload = () => {
     setData(null);
   };
 
-  const sendFile = async (fileToUpload = selectedFile, cityToUse = cityName) => {
+  const sendFile = async (fileToUpload = selectedFile, cityToUse = cityName, langToUse = language) => {
     if (!fileToUpload) return;
 
     const formData = new FormData();
@@ -247,7 +303,7 @@ export const ImageUpload = () => {
 
     try {
       const response = await axiosInstance.post(
-        `/predict?city=${encodeURIComponent(cityToUse)}&confidence_threshold=0.70`,
+        `/predict?city=${encodeURIComponent(cityToUse)}&language=${langToUse}&confidence_threshold=0.70`,
         formData
       );
       if (response.status === 200) {
@@ -264,7 +320,14 @@ export const ImageUpload = () => {
   const handleQuickCitySelect = (city) => {
     setCityName(city);
     if (selectedFile) {
-      sendFile(selectedFile, city);
+      sendFile(selectedFile, city, language);
+    }
+  };
+
+  const handleLanguageChange = (newLang) => {
+    setLanguage(newLang);
+    if (selectedFile) {
+      sendFile(selectedFile, cityName, newLang);
     }
   };
 
@@ -275,7 +338,7 @@ export const ImageUpload = () => {
 
   useEffect(() => {
     if (selectedFile) {
-      sendFile(selectedFile, cityName);
+      sendFile(selectedFile, cityName, language);
     }
   }, [selectedFile]);
 
@@ -301,10 +364,10 @@ export const ImageUpload = () => {
         {/* HEADER SECTION */}
         <div className={classes.headerSection}>
           <Typography variant="h3" className={classes.mainTitle}>
-            Plantwise AI Diagnostics
+            Plantwise Regional AI Diagnostics
           </Typography>
           <Typography variant="body1" className={classes.subtitle}>
-            Target Crop: <strong>Cotton (Gossypium hirsutum)</strong> | Real-Time Agronomic Spray Advisory & Weather Safety Engine
+            Target Crop: <strong>Cotton (Gossypium hirsutum)</strong> | Real-Time Agronomic Spray Advisory & Regional LLM Engine
           </Typography>
 
           <div className={classes.statusBar}>
@@ -316,8 +379,8 @@ export const ImageUpload = () => {
               style={{ borderColor: "#a7f3d0", fontWeight: 600 }}
             />
             <Chip
-              icon={<FaCheckCircle style={{ color: "#10b981" }} />}
-              label="TFLite & Keras Model Active"
+              icon={<FaBrain style={{ color: "#059669" }} />}
+              label="Qwen LLM Regional Engine (6 Languages)"
               variant="outlined"
               size="small"
               style={{ borderColor: "#a7f3d0", fontWeight: 600 }}
@@ -325,15 +388,14 @@ export const ImageUpload = () => {
           </div>
         </div>
 
-        {/* LOCATION SELECTOR */}
+        {/* LOCATION SELECTOR CARD */}
         <div className={classes.locationCard}>
-          <Box display="flex" alignItems="center" gridGap={10} mb={1}>
-            <FaSearchLocation style={{ color: "#059669", fontSize: "1.2rem" }} />
+          <Box display="flex" alignItems="center" gridGap={10} mb={1.5}>
+            <FaSearchLocation style={{ color: "#059669", fontSize: "1.3rem" }} />
             <Typography variant="subtitle1" style={{ fontWeight: 700, color: "#0f172a" }}>
               Target Field Location (City / Village)
             </Typography>
           </Box>
-
           <TextField
             fullWidth
             variant="outlined"
@@ -341,13 +403,12 @@ export const ImageUpload = () => {
             value={cityName}
             onChange={(e) => setCityName(e.target.value)}
             placeholder="Type city or village name e.g. Khairpur, Sukkur, Gambat..."
-            helperText="Live weather parameters will be automatically fetched for this exact location"
             style={{ background: "#ffffff", borderRadius: "10px" }}
           />
 
           <div className={classes.quickPillGroup}>
             <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
-              Quick Select Sindh Locations:
+              Quick Select Sindh Cities:
             </Typography>
             {SINDH_CITIES.map((city) => (
               <Chip
@@ -360,6 +421,39 @@ export const ImageUpload = () => {
                 style={{
                   fontWeight: 600,
                   backgroundColor: cityName.toLowerCase() === city.toLowerCase() ? "#059669" : "#e2e8f0",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* DEDICATED PADDED LANGUAGE SELECTOR CARD */}
+        <div className={classes.languageCard}>
+          <Box display="flex" alignItems="center" gridGap={10} mb={1}>
+            <FaLanguage style={{ color: "#059669", fontSize: "1.5rem" }} />
+            <div>
+              <Typography variant="subtitle1" style={{ fontWeight: 800, color: "#064e3b" }}>
+                Select Advisory Language / زبان جو انتخاب
+              </Typography>
+              <Typography variant="caption" style={{ color: "#475569" }}>
+                Choose your preferred regional language for Qwen AI farmer recommendations
+              </Typography>
+            </div>
+          </Box>
+
+          <div className={classes.langButtonContainer}>
+            {LANGUAGES.map((lang) => (
+              <Chip
+                key={lang.code}
+                label={lang.label}
+                clickable
+                className={classes.langPill}
+                onClick={() => handleLanguageChange(lang.code)}
+                style={{
+                  backgroundColor: language === lang.code ? "#059669" : "#ffffff",
+                  color: language === lang.code ? "#ffffff" : "#0f172a",
+                  border: language === lang.code ? "none" : "1px solid #cbd5e1",
+                  boxShadow: language === lang.code ? "0 4px 12px rgba(5, 150, 105, 0.3)" : "none",
                 }}
               />
             ))}
@@ -383,10 +477,10 @@ export const ImageUpload = () => {
           <div className={classes.loadingContainer}>
             <CircularProgress size={56} className={classes.loader} />
             <Typography variant="h6" style={{ fontWeight: 700, color: "#064e3b" }}>
-              Running AI Neural Network & Fetching Live {cityName} Weather...
+              Running Neural Model & Generating Qwen ({language.toUpperCase()}) Advisory...
             </Typography>
             <Typography variant="body2" style={{ color: "#64748b", marginTop: 4 }}>
-              Analyzing leaf pathogens and evaluating agronomic spray guardrails
+              Fetching live weather for {cityName} and evaluating agronomic spray guardrails
             </Typography>
           </div>
         )}
@@ -427,19 +521,40 @@ export const ImageUpload = () => {
                         {data.diagnosis.disease_name_urdu}
                       </div>
                       <Typography variant="subtitle2" style={{ opacity: 0.95 }}>
-                        📍 Location: <strong>{data.region}</strong>
+                        📍 Target Region: <strong>{data.region}</strong>
                       </Typography>
                     </div>
 
                     <Box display="flex" flexDirection="column" alignItems="flex-end" gridGap={8}>
                       <Chip {...getUrgencyChipProps(data.actionable_decision.urgency_level)} />
                       <Chip
-                        label={`Match Confidence: ${data.diagnosis.confidence_percentage}%`}
+                        label={`Confidence: ${data.diagnosis.confidence_percentage}%`}
                         style={{ background: "rgba(255, 255, 255, 0.2)", color: "#fff", fontWeight: 700 }}
                       />
                     </Box>
                   </Box>
                 </div>
+
+                {/* QWEN AI LLM ADVISORY CARD */}
+                {data.qwen_advisory && (
+                  <div className={classes.qwenAdvisoryCard}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gridGap={10}>
+                      <Typography variant="h6" style={{ fontWeight: 800, color: "#064e3b", display: "flex", alignItems: "center", gap: 8 }}>
+                        <FaBrain style={{ color: "#059669" }} />
+                        Qwen AI Agronomic Recommendation ({data.qwen_advisory.language_native || data.qwen_advisory.language_name || data.qwen_advisory.language})
+                      </Typography>
+                      <Chip
+                        label={`Urgency: ${data.qwen_advisory.urgency.toUpperCase()}`}
+                        style={{ background: "#059669", color: "#fff", fontWeight: 800 }}
+                        size="small"
+                      />
+                    </Box>
+
+                    <div className={data.qwen_advisory.is_rtl ? classes.qwenRtlText : classes.infoBox} style={{ marginTop: 12 }}>
+                      {data.qwen_advisory.recommendation}
+                    </div>
+                  </div>
+                )}
 
                 {/* CHEMICAL REMEDY CARD */}
                 <div className={classes.remedyCard}>

@@ -14,9 +14,9 @@ logging.basicConfig(
 )
 
 app = FastAPI(
-    title="Plantwise Detection API - Khairpur Sindh",
-    description="Cotton Plant Disease Detection, Live OpenWeatherMap API & Actionable Agronomic Decision Engine REST API",
-    version="1.2.0",
+    title="Plantwise Detection API - Khairpur & Sindh Regional",
+    description="Cotton Plant Disease Detection, Live OpenWeatherMap API & Multi-lingual Qwen Agronomic Engine REST API",
+    version="1.4.0",
 )
 
 origins = ["*"]
@@ -38,6 +38,7 @@ async def health_check():
         "service": "Plantwise Detection API",
         "crop": "Cotton (Gossypium hirsutum)",
         "target_region": "Khairpur, Sindh, Pakistan",
+        "languages_supported": ["en", "ur", "sd", "pa", "skr", "ps"],
         "weather_service": "OpenWeatherMap API Integrated",
     }
 
@@ -63,6 +64,7 @@ async def predict_cotton_disease(
     file: UploadFile = File(...),
     confidence_threshold: float = Query(0.70, ge=0.0, le=1.0, description="Minimum confidence threshold"),
     city: str = Query("Khairpur", description="City or village name to fetch live weather automatically (e.g. Khairpur)"),
+    language: str = Query("en", description="Language preference: 'en' (English), 'ur' (Urdu), 'sd' (Sindhi), 'pa' (Punjabi), 'skr' (Saraiki), 'ps' (Pashto)"),
     temperature_c: Optional[float] = Query(None, description="Manual temperature override in °C"),
     wind_speed_kmh: Optional[float] = Query(None, description="Manual wind speed override in km/h"),
     humidity_pct: Optional[float] = Query(None, description="Manual relative humidity override in %"),
@@ -70,7 +72,7 @@ async def predict_cotton_disease(
     """
     Receives an uploaded leaf image file, runs disease classification model inference,
     automatically fetches live weather for the specified city/village,
-    evaluates Khairpur weather safety rules, and returns actionable farmer recommendation JSON.
+    evaluates Sindh weather safety rules, and returns actionable farmer recommendation JSON in chosen regional language.
     """
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type. Upload a valid image file (JPEG/PNG).")
@@ -92,12 +94,13 @@ async def predict_cotton_disease(
             weather_data["humidity_pct"] = humidity_pct
             weather_data["source"] = "Manual User Override"
 
-        logging.info(f"Processing prediction for '{file.filename}' with weather data: {weather_data}")
+        logging.info(f"Processing prediction for '{file.filename}' (lang='{language}') with weather data: {weather_data}")
 
         result = get_farmer_recommendation(
             image_path_or_bytes=image_bytes,
             confidence_threshold=confidence_threshold,
             weather_data=weather_data,
+            language=language,
         )
 
         return result
