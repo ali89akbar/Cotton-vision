@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FiSun, FiMoon, FiCheckCircle, FiX, FiAward, FiDroplet, FiScissors } from "react-icons/fi";
+import { FiSun, FiMoon, FiCheckCircle, FiX, FiAward, FiBookmark, FiShield, FiCheckSquare, FiSquare } from "react-icons/fi";
 import { GiPlantWatering, GiSpray, GiPlantSeed } from "react-icons/gi";
-import { MdOutlinePestControl, MdOutlineWaterDrop } from "react-icons/md";
+import { MdOutlinePestControl } from "react-icons/md";
 import styled, { keyframes } from "styled-components";
 
 // Modern color palette inspired by nature
 const colors = {
-  primary: "#4CAF50",
-  primaryLight: "#81C784",
-  primaryDark: "#388E3C",
-  secondary: "#FFA000",
+  primary: "#059669",
+  primaryLight: "#10b981",
+  primaryDark: "#064e3b",
+  secondary: "#f59e0b",
   background: "#F5F5F5",
   cardBg: "#FFFFFF",
   text: "#333333",
   textLight: "#757575",
   border: "#E0E0E0",
-  success: "#4CAF50",
-  warning: "#FFA000",
-  error: "#F44336",
-  info: "#2196F3",
+  success: "#059669",
+  warning: "#f59e0b",
+  error: "#ef4444",
+  info: "#0284c7",
 };
 
-// Styled components for modern UI
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -44,7 +43,7 @@ const Title = styled.h1`
   font-size: 2.2rem;
   color: ${colors.primaryDark};
   margin-bottom: 0.5rem;
-  font-weight: 600;
+  font-weight: 700;
   background: linear-gradient(to right, ${colors.primary}, ${colors.primaryDark});
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -53,60 +52,144 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   font-size: 1.1rem;
   color: ${colors.textLight};
-  max-width: 600px;
+  max-width: 650px;
   margin: 0 auto;
   line-height: 1.5;
 `;
 
 const PlantsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
 `;
 
 const PlantCard = styled.div`
   background: ${colors.cardBg};
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   border: 1px solid ${colors.border};
   position: relative;
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
   }
 `;
 
-const PlantImageContainer = styled.div`
-  height: 200px;
-  overflow: hidden;
-  position: relative;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+const PlantCardHeader = styled.div`
+  background: linear-gradient(135deg, #064e3b 0%, #059669 100%);
+  color: white;
+  padding: 1.25rem;
+  text-align: left;
 `;
 
-const PlantImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-  
-  ${PlantCard}:hover & {
-    transform: scale(1.05);
-  }
+const CropLabel = styled.span`
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+  display: block;
+`;
+
+const DiseaseTitle = styled.h2`
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 4px 0;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+`;
+
+const LocationBadge = styled.span`
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 3px 10px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-top: 4px;
 `;
 
 const PlantDetails = styled.div`
   padding: 1.5rem;
 `;
 
-const PlantName = styled.h3`
-  font-size: 1.3rem;
-  color: ${colors.text};
-  margin-bottom: 0.75rem;
-  font-weight: 600;
+const ChemicalBox = styled.div`
+  background: #ffffff;
+  border-left: 4px solid #059669;
+  border: 1px solid #e2e8f0;
+  border-left-width: 4px;
+  border-radius: 10px;
+  padding: 0.9rem;
+  margin-bottom: 1.2rem;
+`;
+
+const ChemicalTitle = styled.div`
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+`;
+
+const ChemicalText = styled.div`
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+`;
+
+const ChecklistSection = styled.div`
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+`;
+
+const ChecklistHeader = styled.div`
+  font-weight: 700;
+  color: #064e3b;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+`;
+
+const ChecklistList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+`;
+
+const ChecklistItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.65rem;
+  border-radius: 8px;
+  background: ${props => props.checked ? '#e6f4ea' : '#ffffff'};
+  border: 1px solid ${props => props.checked ? '#a8dab5' : '#f1f5f9'};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #059669;
+  }
+`;
+
+const CheckIcon = styled.div`
+  color: ${props => props.checked ? '#059669' : '#94a3b8'};
+  font-size: 1.2rem;
+  margin-top: 1px;
+`;
+
+const ItemText = styled.span`
+  font-size: 0.88rem;
+  color: ${props => props.checked ? '#064e3b' : '#334155'};
+  text-decoration: ${props => props.checked ? 'line-through' : 'none'};
+  line-height: 1.4;
 `;
 
 const ProgressContainer = styled.div`
@@ -129,50 +212,25 @@ const ProgressFill = styled.div`
 `;
 
 const ProgressText = styled.span`
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: ${colors.textLight};
   display: flex;
   justify-content: space-between;
+  font-weight: 600;
 `;
 
-const StatusDisplay = styled.div`
+const BadgeEarnedBanner = styled.div`
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  color: #78350f;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
   display: flex;
   align-items: center;
+  gap: 8px;
   margin-bottom: 1rem;
-  font-size: 0.9rem;
-`;
-
-const StatusIcon = styled.span`
-  margin-right: 0.5rem;
-  color: ${props => props.color || colors.textLight};
-  display: flex;
-  align-items: center;
-`;
-
-const BadgePreview = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-`;
-
-const MiniBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: ${colors.primaryLight};
-  color: white;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const MoreBadges = styled.span`
-  font-size: 0.8rem;
-  color: ${colors.textLight};
 `;
 
 const CardFooter = styled.div`
@@ -192,10 +250,10 @@ const ViewRoutineButton = styled.button`
   background: ${colors.primary};
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -234,254 +292,6 @@ const EmptyText = styled.p`
   margin: 0 auto;
 `;
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(5px);
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  animation: ${fadeIn} 0.3s ease-out;
-`;
-
-const ModalHeader = styled.div`
-  padding: 1.5rem;
-  border-bottom: 1px solid ${colors.border};
-  position: relative;
-  background: linear-gradient(to right, ${colors.primary}, ${colors.primaryLight});
-  color: white;
-  border-radius: 16px 16px 0 0;
-`;
-
-const ModalTitle = styled.h3`
-  margin: 0;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const BadgeEarnedTag = styled.div`
-  display: inline-flex;
-  align-items: center;
-  background: white;
-  color: ${colors.primary};
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  margin-top: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const RoutineToggleContainer = styled.div`
-  display: flex;
-  border-bottom: 1px solid ${colors.border};
-  background: ${colors.primaryLight};
-  padding: 0;
-`;
-
-const ToggleButton = styled.button`
-  flex: 1;
-  background: ${props => props.active ? colors.primary : 'transparent'};
-  border: none;
-  padding: 1rem;
-  font-weight: 500;
-  color: ${props => props.active ? 'white' : 'rgba(255, 255, 255, 0.9)'};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: all 0.2s;
-  gap: 0.5rem;
-  font-size: 0.95rem;
-  
-  &:hover {
-    background: ${props => props.active ? colors.primary : colors.primaryLight};
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: ${props => props.active ? 'white' : 'transparent'};
-    border-radius: 3px 3px 0 0;
-  }
-
-  svg {
-    font-size: 1.1rem;
-  }
-`;
-
-const RoutineStepsContainer = styled.div`
-  padding: 1.5rem;
-`;
-
-const StepsHeader = styled.h4`
-  margin: 0 0 1.5rem;
-  color: ${colors.text};
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.1rem;
-`;
-
-const StepsCount = styled.span`
-  font-size: 0.9rem;
-  font-weight: normal;
-  color: ${colors.textLight};
-`;
-
-const StepsList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-`;
-
-const StepItem = styled.li`
-  padding: 1rem 0;
-  border-bottom: 1px solid ${colors.border};
-  display: flex;
-  align-items: center;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const StepCheckbox = styled.input`
-  margin-right: 1rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  accent-color: ${colors.primary};
-  cursor: pointer;
-  flex-shrink: 0;
-`;
-
-const StepText = styled.span`
-  flex: 1;
-  color: ${props => props.completed ? colors.textLight : colors.text};
-  text-decoration: ${props => props.completed ? 'line-through' : 'none'};
-  font-size: 0.95rem;
-`;
-
-const StepIcon = styled.span`
-  margin-right: 0.75rem;
-  color: ${colors.primary};
-  display: flex;
-  align-items: center;
-`;
-
-const NoRoutineMessage = styled.div`
-  color: ${colors.textLight};
-  font-style: italic;
-  text-align: center;
-  padding: 2rem 0;
-  font-size: 0.95rem;
-`;
-
-const ModalBadgesSection = styled.div`
-  padding: 1.5rem;
-  background: ${colors.background};
-  border-top: 1px solid ${colors.border};
-`;
-
-const BadgesTitle = styled.h4`
-  margin: 0 0 1.5rem;
-  color: ${colors.text};
-  font-size: 1.1rem;
-`;
-
-const BadgesList = styled.div`
-  display: grid;
-  gap: 1rem;
-`;
-
-const BadgeItem = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s;
-  
-  &:hover {
-    transform: translateY(-2px);
-  }
-`;
-
-const BadgeIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${colors.primaryLight};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 1rem;
-  flex-shrink: 0;
-  font-size: 1.2rem;
-`;
-
-const BadgeDetails = styled.div`
-  flex: 1;
-`;
-
-const BadgeName = styled.div`
-  font-weight: 500;
-  color: ${colors.text};
-  margin-bottom: 0.25rem;
-`;
-
-const BadgeDate = styled.div`
-  font-size: 0.8rem;
-  color: ${colors.textLight};
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: rotate(90deg);
-  }
-`;
-
 const LoadingContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -493,7 +303,7 @@ const LoadingContainer = styled.div`
 const LoadingSpinner = styled.div`
   width: 50px;
   height: 50px;
-  border: 4px solid rgba(76, 175, 80, 0.2);
+  border: 4px solid rgba(5, 150, 105, 0.2);
   border-top: 4px solid ${colors.primary};
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -510,59 +320,55 @@ const LoadingText = styled.p`
   font-size: 1rem;
 `;
 
-const getStepIcon = (step) => {
-  const lowerStep = step.toLowerCase();
-  if (lowerStep.includes('water') || lowerStep.includes('hydration')) {
-    return <GiPlantWatering />;
-  } else if (lowerStep.includes('prune') || lowerStep.includes('trim')) {
-    return <FiScissors />;
-  } else if (lowerStep.includes('spray') || lowerStep.includes('mist')) {
-    return <GiSpray />;
-  } else if (lowerStep.includes('pest') || lowerStep.includes('insect')) {
-    return <MdOutlinePestControl />;
-  } else if (lowerStep.includes('fertilize') || lowerStep.includes('nutrient')) {
-    return <GiPlantSeed />;
+// Helper to generate 4 point-wise recommendation steps for check marks
+const getPointWiseSteps = (prediction) => {
+  const steps = [];
+
+  if (prediction.chemicalRecommendation) {
+    steps.push(`Apply Chemical Formulation: ${prediction.chemicalRecommendation}`);
+  } else {
+    steps.push(`Apply recommended spray formula for ${prediction.className}`);
   }
-  return <FiCheckCircle />;
+
+  if (prediction.dosagePerAcre) {
+    steps.push(`Prepare exact per-acre dosage: ${prediction.dosagePerAcre}`);
+  } else {
+    steps.push("Prepare per-acre dosage in 100L water per acre");
+  }
+
+  steps.push("Spray during Early Morning (6:00-9:00 AM) or Evening to avoid high heat/wind drift");
+  steps.push("Ensure thorough spray coverage on both lower and upper leaf surfaces");
+
+  if (prediction.recommendation) {
+    steps.push(`Qwen AI Field Rule: ${prediction.recommendation}`);
+  }
+
+  return steps;
 };
 
 const SavedPlants = () => {
   const [predictions, setPredictions] = useState([]);
-  const [selectedCareRoutine, setSelectedCareRoutine] = useState(null);
-  const [routineType, setRoutineType] = useState("morning");
-  const [checkedSteps, setCheckedSteps] = useState({ morning: [], night: [] });
+  const [checkedMap, setCheckedMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [plantBadges, setPlantBadges] = useState({});
 
   const fetchPredictions = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch predictions
       const predictionsRes = await axios.get("http://localhost:6005/api/predictions", {
         withCredentials: true,
       });
-      setPredictions(predictionsRes.data);
-      
-      // Fetch all badges
-      const badgesRes = await axios.get("http://localhost:6005/api/user/badges", {
-        withCredentials: true,
+      const data = predictionsRes.data || [];
+      setPredictions(data);
+
+      // Initialize checked state map
+      const initialChecked = {};
+      data.forEach((p, pIdx) => {
+        const steps = getPointWiseSteps(p);
+        initialChecked[pIdx] = steps.map(() => p.badgeEarned || false);
       });
-      
-      // Organize badges by plant class name
-      const organizedBadges = {};
-      badgesRes.data.badges.forEach(badge => {
-        if (badge.plantClassName) {
-          if (!organizedBadges[badge.plantClassName]) {
-            organizedBadges[badge.plantClassName] = [];
-          }
-          organizedBadges[badge.plantClassName].push(badge);
-        }
-      });
-      
-      setPlantBadges(organizedBadges);
+      setCheckedMap(initialChecked);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching predictions:", error);
     } finally {
       setIsLoading(false);
     }
@@ -572,147 +378,47 @@ const SavedPlants = () => {
     fetchPredictions();
   }, []);
 
-  const openModal = (prediction) => {
-    setSelectedCareRoutine(prediction);
-    setRoutineType("morning");
-    
-    // Initialize checkbox states for both routines based on current completion status
-    setCheckedSteps({
-      morning: prediction.morningCareRoutine?.map(() => prediction.completedMorning) || [],
-      night: prediction.nightCareRoutine?.map(() => prediction.completedNight) || []
-    });
-  };
+  const handleStepToggle = async (plantIndex, stepIndex) => {
+    const currentPlant = predictions[plantIndex];
+    const steps = getPointWiseSteps(currentPlant);
 
-  const closeModal = () => {
-    setSelectedCareRoutine(null);
-  };
+    const currentPlantChecked = [...(checkedMap[plantIndex] || steps.map(() => false))];
+    currentPlantChecked[stepIndex] = !currentPlantChecked[stepIndex];
 
-  const toggleRoutine = () => {
-    setRoutineType(prev => prev === "morning" ? "night" : "morning");
-  };
-
-  const handleCheckboxChange = async (index) => {
-    // Update the checked state for the current routine
-    const updatedSteps = {
-      ...checkedSteps,
-      [routineType]: checkedSteps[routineType].map((val, i) => 
-        i === index ? !val : val
-      )
+    const updatedCheckedMap = {
+      ...checkedMap,
+      [plantIndex]: currentPlantChecked,
     };
-    
-    setCheckedSteps(updatedSteps);
+    setCheckedMap(updatedCheckedMap);
 
-    // Check if all steps in current routine are completed
-    const allChecked = updatedSteps[routineType].every(val => val);
-    
-    if (allChecked && selectedCareRoutine) {
+    const allChecked = currentPlantChecked.every(Boolean);
+
+    // If ALL check marks are checked, award badge!
+    if (allChecked && !currentPlant.badgeEarned) {
       try {
         const response = await axios.post(
           "http://localhost:6005/api/user/mark-care",
-          {
-            className: selectedCareRoutine.className,
-            routineType,
-          },
+          { className: currentPlant.className, routineType: "morning" },
           { withCredentials: true }
         );
 
-        if (response.data.badgeAwarded) {
-          alert(`🎉 New badge earned: ${response.data.badgeAwarded.name}`);
-          setPlantBadges(prev => ({
-            ...prev,
-            [selectedCareRoutine.className]: [
-              ...(prev[selectedCareRoutine.className] || []),
-              response.data.badgeAwarded
-            ]
-          }));
-        }
+        alert(`🎉 CONGRATULATIONS! You completed all point-wise recommendations for ${currentPlant.className}!\n\nNew Badge Earned: 🏆 ${currentPlant.className} Care Master Badge!`);
 
-        // Update local state to reflect completion
-        const updatedPredictions = predictions.map(p => 
-          p._id === selectedCareRoutine._id 
-            ? { 
-                ...p, 
-                [`completed${routineType.charAt(0).toUpperCase() + routineType.slice(1)}`]: true,
-                badgeEarned: response.data.badgeEarned || p.badgeEarned
-              } 
-            : p
-        );
+        // Update local state to reflect badge earned
+        const updatedPredictions = [...predictions];
+        updatedPredictions[plantIndex].badgeEarned = true;
         setPredictions(updatedPredictions);
-        
-        // Update selected care routine in modal
-        setSelectedCareRoutine(prev => ({
-          ...prev,
-          [`completed${routineType.charAt(0).toUpperCase() + routineType.slice(1)}`]: true,
-          badgeEarned: response.data.badgeEarned || prev.badgeEarned
-        }));
-
-        // Update checkbox states to reflect completion
-        setCheckedSteps({
-          ...updatedSteps,
-          [routineType]: updatedSteps[routineType].map(() => true)
-        });
-
       } catch (err) {
-        console.error("Error marking routine complete:", err);
-        // Revert checkbox state on error
-        setCheckedSteps({
-          ...checkedSteps,
-          [routineType]: checkedSteps[routineType].map((val, i) => 
-            i === index ? !val : val
-          )
-        });
+        console.error("Error marking care complete:", err);
       }
     }
-  };
-
-  const getProgressStatus = (prediction) => {
-    if (prediction.badgeEarned) {
-      return {
-        text: "Complete",
-        progress: 100,
-        color: colors.success,
-        icon: <FiCheckCircle />
-      };
-    }
-    if (prediction.completedMorning && prediction.completedNight) {
-      return {
-        text: "Ready for Badge",
-        progress: 100,
-        color: colors.warning,
-        icon: <FiAward />
-      };
-    }
-    if (prediction.completedMorning || prediction.completedNight) {
-      return {
-        text: "In Progress",
-        progress: 50,
-        color: colors.info,
-        icon: <FiCheckCircle />
-      };
-    }
-    return {
-      text: "Not Started",
-      progress: 0,
-      color: colors.textLight,
-      icon: <FiCheckCircle />
-    };
-  };
-
-  const getPlantImage = (className) => {
-    // Placeholder images - replace with your actual image paths
-    const plantImages = {
-      "Tomato": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-      "Rose": "https://images.unsplash.com/photo-1519683109079-d5f539e1542f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-      "Potato___Early_blight": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    };
-    return plantImages[className] || "https://images.unsplash.com/photo-1485955900006-10f4d324d411?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
   };
 
   if (isLoading) {
     return (
       <LoadingContainer>
         <LoadingSpinner />
-        <LoadingText>Loading your plants...</LoadingText>
+        <LoadingText>Loading saved plants & point-wise recommendations...</LoadingText>
       </LoadingContainer>
     );
   }
@@ -720,67 +426,92 @@ const SavedPlants = () => {
   return (
     <Container>
       <Header>
-        <Title>Your Plant Collection</Title>
+        <Title>Your Saved Cotton Plants & Recommendations</Title>
         <Subtitle>
-          Track and manage your plant care routines. Complete daily tasks to earn badges and keep your plants thriving.
+          Complete point-wise recommendation steps for each saved plant disease. Check off all steps to earn your 🏆 Care Master Badge!
         </Subtitle>
       </Header>
 
       {predictions.length > 0 ? (
         <PlantsGrid>
-          {predictions.map((prediction, index) => {
-            const status = getProgressStatus(prediction);
-            const badges = plantBadges[prediction.className] || [];
+          {predictions.map((prediction, pIdx) => {
+            const steps = getPointWiseSteps(prediction);
+            const plantChecked = checkedMap[pIdx] || steps.map(() => false);
+            const completedCount = plantChecked.filter(Boolean).length;
+            const progressPercent = Math.round((completedCount / steps.length) * 100);
 
             return (
-              <PlantCard key={index}>
-                <PlantImageContainer>
-                  <PlantImage 
-                    src={getPlantImage(prediction.className)} 
-                    alt={prediction.className}
-                  />
-                </PlantImageContainer>
+              <PlantCard key={pIdx}>
+                {/* PLANT & DISEASE HEADER */}
+                <PlantCardHeader>
+                  <CropLabel>Cotton Crop Disease Diagnosis</CropLabel>
+                  <DiseaseTitle>{prediction.className}</DiseaseTitle>
+                  {prediction.region && (
+                    <LocationBadge>📍 {prediction.region}</LocationBadge>
+                  )}
+                </PlantCardHeader>
 
                 <PlantDetails>
-                  <PlantName>{prediction.className}</PlantName>
-                  
+                  {/* CHEMICAL FORMULATION (ENGLISH) */}
+                  {prediction.chemicalRecommendation && (
+                    <ChemicalBox>
+                      <ChemicalTitle>💊 Chemical Spray Remedy (English Product)</ChemicalTitle>
+                      <ChemicalText>{prediction.chemicalRecommendation}</ChemicalText>
+                    </ChemicalBox>
+                  )}
+
+                  {/* POINT-WISE RECOMMENDATION CHECKLIST */}
+                  <ChecklistSection>
+                    <ChecklistHeader>
+                      <span>📋 Point-Wise Recommendation Checklist</span>
+                      <span style={{ fontSize: "0.82rem", color: "#059669" }}>
+                        {completedCount}/{steps.length} Done
+                      </span>
+                    </ChecklistHeader>
+
+                    <ChecklistList>
+                      {steps.map((stepText, sIdx) => {
+                        const isChecked = plantChecked[sIdx] || false;
+                        return (
+                          <ChecklistItem
+                            key={sIdx}
+                            checked={isChecked}
+                            onClick={() => handleStepToggle(pIdx, sIdx)}
+                          >
+                            <CheckIcon checked={isChecked}>
+                              {isChecked ? <FiCheckSquare /> : <FiSquare />}
+                            </CheckIcon>
+                            <ItemText checked={isChecked}>{stepText}</ItemText>
+                          </ChecklistItem>
+                        );
+                      })}
+                    </ChecklistList>
+                  </ChecklistSection>
+
+                  {/* PROGRESS BAR & BADGE BANNER */}
                   <ProgressContainer>
                     <ProgressBar>
-                      <ProgressFill 
-                        style={{ width: `${status.progress}%` }} 
-                        color={status.color}
-                      />
+                      <ProgressFill style={{ width: `${progressPercent}%` }} color={progressPercent === 100 ? "#059669" : "#0284c7"} />
                     </ProgressBar>
                     <ProgressText>
-                      <span>Care Progress</span>
-                      <span>{status.progress}%</span>
+                      <span>Checklist Completion</span>
+                      <span>{progressPercent}%</span>
                     </ProgressText>
                   </ProgressContainer>
 
-                  <StatusDisplay>
-                    <StatusIcon color={status.color}>
-                      {status.icon}
-                    </StatusIcon>
-                    <span>{status.text}</span>
-                  </StatusDisplay>
-
-                  <BadgePreview>
-                    {badges.slice(0, 3).map((badge, i) => (
-                      <MiniBadge key={i} title={badge.name}>
-                        <FiAward />
-                      </MiniBadge>
-                    ))}
-                    {badges.length > 3 && (
-                      <MoreBadges>+{badges.length - 3} more</MoreBadges>
-                    )}
-                  </BadgePreview>
+                  {(prediction.badgeEarned || progressPercent === 100) && (
+                    <BadgeEarnedBanner>
+                      <FiAward style={{ fontSize: "1.2rem", color: "#d97706" }} />
+                      🏆 {prediction.className} Care Master Badge Earned!
+                    </BadgeEarnedBanner>
+                  )}
 
                   <CardFooter>
                     <DateAdded>
-                      Added: {new Date(prediction.timestamp).toLocaleDateString()}
+                      Saved: {new Date(prediction.timestamp || Date.now()).toLocaleDateString()}
                     </DateAdded>
-                    <ViewRoutineButton onClick={() => openModal(prediction)}>
-                      View Care
+                    <ViewRoutineButton onClick={() => alert(`Showing point-wise checklist for ${prediction.className}`)}>
+                      <FiCheckCircle /> View Routine
                     </ViewRoutineButton>
                   </CardFooter>
                 </PlantDetails>
@@ -790,114 +521,12 @@ const SavedPlants = () => {
         </PlantsGrid>
       ) : (
         <EmptyState>
-          <EmptyImage src="/images/no-plants.svg" alt="No plants found" />
+          <EmptyImage src="/images/no-plants.svg" alt="No plants saved" />
           <EmptyTitle>No plants saved yet</EmptyTitle>
           <EmptyText>
-            Detect plant diseases to start tracking care routines and earn badges for your plant care achievements.
+            Detect cotton diseases on the AI Scanner Dashboard and click "Save Diagnosis to My Saved Plants" to start completing point-wise recommendation checklists and earning badges!
           </EmptyText>
         </EmptyState>
-      )}
-
-      {selectedCareRoutine && (
-        <ModalOverlay onClick={closeModal}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <CloseButton onClick={closeModal}>
-              <FiX />
-            </CloseButton>
-
-            <ModalHeader>
-              <ModalTitle>
-                {selectedCareRoutine.className} Care Routine
-              </ModalTitle>
-              {selectedCareRoutine.badgeEarned && (
-                <BadgeEarnedTag>
-                  <FiAward /> Care Mastered
-                </BadgeEarnedTag>
-              )}
-            </ModalHeader>
-
-            <RoutineToggleContainer>
-              <ToggleButton
-                active={routineType === 'morning'}
-                onClick={() => setRoutineType('morning')}
-              >
-                <FiSun /> Morning Routine
-                {selectedCareRoutine.completedMorning && (
-                  <FiCheckCircle />
-                )}
-              </ToggleButton>
-              <ToggleButton
-                active={routineType === 'night'}
-                onClick={() => setRoutineType('night')}
-              >
-                <FiMoon /> Night Routine
-                {selectedCareRoutine.completedNight && (
-                  <FiCheckCircle />
-                )}
-              </ToggleButton>
-            </RoutineToggleContainer>
-
-            <RoutineStepsContainer>
-              <StepsHeader>
-                {routineType === 'morning' ? 'Morning' : 'Night'} Care Steps
-                {selectedCareRoutine[`${routineType}CareRoutine`]?.length > 0 && (
-                  <StepsCount>
-                    {checkedSteps[routineType].filter(Boolean).length}/{selectedCareRoutine[`${routineType}CareRoutine`].length} completed
-                  </StepsCount>
-                )}
-              </StepsHeader>
-
-              {(selectedCareRoutine[`${routineType}CareRoutine`] || []).length > 0 ? (
-                <StepsList>
-                  {selectedCareRoutine[`${routineType}CareRoutine`].map((step, idx) => (
-                    <StepItem key={idx}>
-                      <StepCheckbox
-                        type="checkbox"
-                        checked={checkedSteps[routineType][idx] || false}
-                        disabled={
-                          (routineType === "morning" && selectedCareRoutine.completedMorning) ||
-                          (routineType === "night" && selectedCareRoutine.completedNight)
-                        }
-                        onChange={() => handleCheckboxChange(idx)}
-                      />
-                      <StepIcon>
-                        {getStepIcon(step)}
-                      </StepIcon>
-                      <StepText completed={checkedSteps[routineType][idx]}>
-                        {step}
-                      </StepText>
-                    </StepItem>
-                  ))}
-                </StepsList>
-              ) : (
-                <NoRoutineMessage>
-                  No {routineType} care routine available for this plant.
-                </NoRoutineMessage>
-              )}
-            </RoutineStepsContainer>
-
-            {plantBadges[selectedCareRoutine.className]?.length > 0 && (
-              <ModalBadgesSection>
-                <BadgesTitle>Earned Badges</BadgesTitle>
-                <BadgesList>
-                  {plantBadges[selectedCareRoutine.className].map((badge, index) => (
-                    <BadgeItem key={index}>
-                      <BadgeIcon>
-                        <FiAward />
-                      </BadgeIcon>
-                      <BadgeDetails>
-                        <BadgeName>{badge.name}</BadgeName>
-                        <BadgeDate>
-                          Earned on {new Date(badge.earnedAt).toLocaleDateString()}
-                        </BadgeDate>
-                      </BadgeDetails>
-                    </BadgeItem>
-                  ))}
-                </BadgesList>
-              </ModalBadgesSection>
-            )}
-          </ModalContent>
-        </ModalOverlay>
       )}
     </Container>
   );

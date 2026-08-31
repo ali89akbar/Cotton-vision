@@ -210,7 +210,18 @@ app.post("/addPlant", async (req, res) => {
 
 app.post("/save-prediction", isAuthenticated, async (req, res) => {
   try {
-    const { className, morningCareRoutine, nightCareRoutine } = req.body;
+    const {
+      className,
+      morningCareRoutine,
+      nightCareRoutine,
+      recommendation,
+      chemicalRecommendation,
+      dosagePerAcre,
+      urgencyLevel,
+      region,
+      weatherSafetyStatus,
+      language,
+    } = req.body;
 
     const user = await userdb.findOne({ googleId: req.user.googleId });
 
@@ -222,6 +233,13 @@ app.post("/save-prediction", isAuthenticated, async (req, res) => {
       className,
       morningCareRoutine,
       nightCareRoutine,
+      recommendation,
+      chemicalRecommendation,
+      dosagePerAcre,
+      urgencyLevel,
+      region,
+      weatherSafetyStatus,
+      language,
       timestamp: new Date(),
     };
 

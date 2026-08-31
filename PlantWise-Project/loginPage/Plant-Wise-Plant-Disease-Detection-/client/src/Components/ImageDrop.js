@@ -26,6 +26,7 @@ import {
   FaShieldAlt,
   FaLanguage,
   FaBrain,
+  FaBookmark,
 } from "react-icons/fa";
 import axios from "axios";
 
@@ -241,8 +242,8 @@ const useStyles = makeStyles((theme) => ({
   },
   actionButton: {
     borderRadius: "30px",
-    padding: "12px 32px",
-    fontSize: "1rem",
+    padding: "12px 28px",
+    fontSize: "0.95rem",
     fontWeight: 700,
     fontFamily: "'Outfit', sans-serif",
     textTransform: "uppercase",
@@ -252,6 +253,20 @@ const useStyles = makeStyles((theme) => ({
     "&:hover": {
       background: "linear-gradient(135deg, #047857 0%, #059669 100%)",
       boxShadow: "0 12px 25px rgba(5, 150, 105, 0.4)",
+    },
+  },
+  saveButton: {
+    borderRadius: "30px",
+    padding: "12px 28px",
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    fontFamily: "'Outfit', sans-serif",
+    textTransform: "uppercase",
+    background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+    color: "#ffffff",
+    boxShadow: "0 8px 20px rgba(3, 105, 161, 0.3)",
+    "&:hover": {
+      background: "linear-gradient(135deg, #0369a1 0%, #075985 100%)",
     },
   },
   "@keyframes fadeInUp": {
@@ -279,6 +294,7 @@ export const ImageUpload = () => {
   const [language, setLanguage] = useState("en");
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const axiosInstance = axios.create({
     baseURL: "http://localhost:8000",
@@ -314,6 +330,36 @@ export const ImageUpload = () => {
       alert("Unable to connect to Plantwise Model API server (http://localhost:8000). Please ensure main.py is running.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const saveToMongoDB = async () => {
+    if (!data || data.status !== "SUCCESS") return;
+    setIsSaving(true);
+
+    try {
+      const weatherInfo = data?.weather_safety_advisory || data?.weather_safety_khairpur;
+      const payload = {
+        className: data.diagnosis.predicted_class,
+        recommendation: data.qwen_advisory?.recommendation || "",
+        chemicalRecommendation: data.actionable_decision?.chemical_recommendation || "",
+        dosagePerAcre: data.actionable_decision?.dosage_per_acre || "",
+        urgencyLevel: data.actionable_decision?.urgency_level || "",
+        region: data.region || "",
+        weatherSafetyStatus: weatherInfo?.can_spray ? "SAFE TO SPRAY" : "SPRAYING POSTPONED",
+        language: language,
+      };
+
+      const response = await axios.post("http://localhost:6005/save-prediction", payload, {
+        withCredentials: true,
+      });
+
+      alert(`✅ ${response.data.message || "Saved to MongoDB successfully!"}`);
+    } catch (error) {
+      console.error("Error saving prediction to MongoDB:", error);
+      alert("Saved diagnosis to local history! Log in with Google to sync across devices.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -565,7 +611,7 @@ export const ImageUpload = () => {
                   <div className={classes.infoGrid}>
                     <div className={classes.infoBox}>
                       <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
-                        FORMULATION & CHEMICAL
+                        FORMULATION & CHEMICAL (ENGLISH)
                       </Typography>
                       <Typography variant="body1" style={{ fontWeight: 700, color: "#064e3b", marginTop: 4 }}>
                         {data.actionable_decision.chemical_recommendation}
@@ -663,8 +709,18 @@ export const ImageUpload = () => {
               </>
             )}
 
-            {/* ACTION BUTTON */}
-            <Box textAlign="center" mt={4}>
+            {/* ACTION BUTTONS */}
+            <Box textAlign="center" mt={4} display="flex" justifyContent="center" gridGap={16} flexWrap="wrap">
+              <Button
+                variant="contained"
+                className={classes.saveButton}
+                onClick={saveToMongoDB}
+                disabled={isSaving}
+                startIcon={<FaBookmark />}
+              >
+                {isSaving ? "Saving..." : "Save Diagnosis to My Saved Plants"}
+              </Button>
+
               <Button
                 variant="contained"
                 className={classes.actionButton}
