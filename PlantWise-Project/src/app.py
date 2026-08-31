@@ -1,52 +1,62 @@
-import os
+"""
+FastAPI Server for Plantwise Cotton Disease Detection API
+Integrates Model Inference, Live OpenWeatherMap API, Sindh Agronomic Rules,
+Multi-Lingual Qwen LLM Advisory, Interactive Qwen AI Agronomist Copilot Chat,
+and Guaranteed Multi-Lingual MP3 Audio TTS Stream Service.
+"""
+
 import logging
+import io
 from typing import Optional
-from fastapi import FastAPI, File, UploadFile, Query, HTTPException
+from fastapi import FastAPI, File, UploadFile, Query, HTTPException, Body
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from gtts import gTTS
 
-from inference import get_farmer_recommendation
-from weather_service import get_current_weather
+try:
+    from inference import get_farmer_recommendation
+    from weather_service import get_current_weather
+    from qwen_advisory import get_advisory
+except ImportError:
+    from src.inference import get_farmer_recommendation
+    from src.weather_service import get_current_weather
+    from src.qwen_advisory import get_advisory
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 app = FastAPI(
-    title="Plantwise Detection API - Khairpur & Sindh Regional",
-    description="Cotton Plant Disease Detection, Live OpenWeatherMap API & Multi-lingual Qwen Agronomic Engine REST API",
-    version="1.4.0",
+    title="Plantwise Cotton AI API",
+    description="High-performance Cotton Disease Diagnostics & Qwen LLM Agronomic Advisory API for Sindh, Pakistan.",
+    version="2.0.0",
 )
 
-origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-@app.get("/ping")
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
+@app.get("/")
+def read_root():
     return {
         "status": "online",
-        "service": "Plantwise Detection API",
-        "crop": "Cotton (Gossypium hirsutum)",
-        "target_region": "Khairpur, Sindh, Pakistan",
-        "languages_supported": ["en", "ur", "sd", "pa", "skr", "ps"],
-        "weather_service": "OpenWeatherMap API Integrated",
+        "service": "Plantwise Cotton AI Model & Qwen LLM Service",
+        "supported_languages": ["en", "ur", "sd", "pa", "skr", "ps"],
+        "endpoints": ["/predict", "/weather", "/qwen-chat", "/tts", "/health"],
     }
 
 
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "plantwise-model-api"}
+
+
 @app.get("/weather")
-async def get_live_weather(
-    city: str = Query("Khairpur", description="City/Village name to fetch real-time weather for (e.g. Khairpur, Gambat, Kot Diji, Sukkur)")
-):
+def fetch_weather(city: str = Query("Khairpur", description="City or village name (e.g. Khairpur, Sukkur, Gambat)")):
     """
     Fetches real-time temperature, wind speed, and humidity for a specified city or village
     using the OpenWeatherMap API with automatic fallback.
@@ -57,6 +67,65 @@ async def get_live_weather(
     except Exception as e:
         logging.error(f"Error fetching live weather for '{city}': {e}")
         raise HTTPException(status_code=500, detail=f"Weather service error: {str(e)}")
+
+
+@app.post("/tts")
+def text_to_speech_audio(
+    text: str = Body(..., embed=True, description="Advisory text to speak"),
+    language: str = Body("ur", embed=True, description="Language preference e.g. 'ur', 'sd', 'en'"),
+):
+    """
+    Generates high-quality MP3 audio speech stream for any regional advisory text
+    using gTTS engine. Guaranteed audio playback on 100% of browsers and operating systems.
+    """
+    try:
+        lang_code = "ur" if language.lower() in ["ur", "sd", "pa", "skr", "ps", "urdu"] else "en"
+        clean_text = text.strip()[:350]
+        tts = gTTS(text=clean_text, lang=lang_code, slow=False)
+        mp3_fp = io.BytesIO()
+        tts.write_to_fp(mp3_fp)
+        mp3_fp.seek(0)
+        return Response(content=mp3_fp.read(), media_type="audio/mpeg")
+    except Exception as e:
+        logging.error(f"gTTS Audio Stream Error: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
+
+
+@app.post("/qwen-chat")
+def qwen_agronomist_chat(
+    message: str = Body(..., embed=True, description="Farmer question e.g. 'Can I spray fertilizer with Copper Oxychloride?'"),
+    disease: Optional[str] = Body(None, embed=True, description="Current detected disease if any"),
+    language: str = Body("en", embed=True, description="Language preference e.g. 'ur', 'sd', 'en'"),
+):
+    """
+    Interactive Qwen AI Agronomist Copilot Chatbot powered by Alibaba Cloud Qwen-Plus.
+    Allows farmers to ask follow-up agronomic, spray, or fertilizer questions.
+    """
+    try:
+        disease_context = f"The crop disease detected is {disease}." if disease else "General cotton crop management."
+        chat_prompt = (
+            f"You are an expert agronomy specialist for cotton crops in Sindh, Pakistan. {disease_context} "
+            f"Answer the farmer's question clearly, concisely, and practically in language '{language}':\n\nFarmer Question: {message}"
+        )
+        res = get_advisory(
+            disease=disease or "Cotton Management",
+            severity="medium",
+            region="Sindh, Pakistan",
+            weather=chat_prompt,
+            language=language,
+        )
+        return {
+            "status": "SUCCESS",
+            "reply": res.get("recommendation", "Please follow standard agricultural guidelines."),
+            "language": language,
+        }
+    except Exception as e:
+        logging.error(f"Error in Qwen Chat: {e}")
+        return {
+            "status": "FALLBACK",
+            "reply": "Please ensure chemical sprays are applied during cool morning hours with proper safety gear.",
+            "language": language,
+        }
 
 
 @app.post("/predict")

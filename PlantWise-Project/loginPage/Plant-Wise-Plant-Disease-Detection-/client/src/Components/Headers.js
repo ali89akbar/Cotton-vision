@@ -45,13 +45,14 @@ const Headers = () => {
 
                 <ul className={menuOpen ? 'nav-links open' : 'nav-links'}>
                     <li><NavLink to="/" onClick={() => setMenuOpen(false)}>Home</NavLink></li>
-                    <li><NavLink to="/dashboard" className="model-pill" onClick={() => setMenuOpen(false)}>AI AI Disease Scanner</NavLink></li>
+                    <li><NavLink to="/dashboard" className="model-pill" onClick={() => setMenuOpen(false)}>AI Disease Scanner</NavLink></li>
+                    <li><NavLink to="/outbreak-radar" onClick={() => setMenuOpen(false)}>🗺️ Outbreak Radar</NavLink></li>
 
                     {Object.keys(userdata).length > 0 ? (
                         <>
-                            <li><NavLink to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</NavLink></li>
                             <li><NavLink to="/saved-plants" onClick={() => setMenuOpen(false)}>Saved Plants</NavLink></li>
                             <li><NavLink to="/badge-progress" onClick={() => setMenuOpen(false)}>Badge Progress</NavLink></li>
+                            <li><NavLink to="/social-media" onClick={() => setMenuOpen(false)}>Community</NavLink></li>
                             <li className="user-name">{userdata?.displayName}</li>
                             {userdata?.image && <li><img src={userdata?.image} className="user-img" alt="user" /></li>}
                             <li onClick={logout} className="logout-btn">Logout</li>
