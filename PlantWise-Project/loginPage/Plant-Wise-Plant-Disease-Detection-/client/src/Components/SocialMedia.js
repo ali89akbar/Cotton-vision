@@ -352,7 +352,7 @@ const SocialMedia = () => {
       <div className={classes.root} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
         <Card style={{ padding: 40, textAlign: 'center', borderRadius: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: 500, background: '#ffffff' }}>
           <LocalFlorist style={{ fontSize: 54, color: '#059669', marginBottom: 12 }} />
-          <Typography variant="h5" style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Outfit', sans-serif" }}>
+          <Typography variant="h5" style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Bricolage Grotesque', sans-serif" }}>
             🔒 Registered Farmer Access Only
           </Typography>
           <Typography variant="body1" style={{ marginTop: 10, color: '#475569', lineHeight: 1.6 }}>

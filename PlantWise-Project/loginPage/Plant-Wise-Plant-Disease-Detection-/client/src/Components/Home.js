@@ -1,71 +1,136 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaLeaf, FaFlask, FaCloudSun, FaShieldAlt, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
+import { FiAperture, FiCloudRain, FiCpu, FiCheckCircle, FiShield } from 'react-icons/fi';
+import { FaLeaf, FaFlask, FaCloudSun, FaShieldAlt, FaSeedling } from 'react-icons/fa';
+import FeaturesShowcase from './FeaturesShowcase';
+import AiIntelligence from './AiIntelligence';
+import Testimonials from './Testimonials';
+import FaqSection from './FaqSection';
 import './home.css';
 
 const Home = () => {
   return (
     <div className="plantwise-container">
       {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-content">
-          <div className="app-badge">
-            <FaShieldAlt /> Hackathon Production Release 2026
-          </div>
-          <h1 className="app-title">Plant<span className="highlight">Wise</span> Detection</h1>
-          <p className="tagline">
-            AI-Powered Cotton Disease Classification & Weather-Aware Agronomic Decision Engine for Khairpur & Sindh Farmers.
-          </p>
-          <div className="cta-buttons">
-            <NavLink to="/dashboard" className="primary-btn">
-              Launch AI Scanner <FaArrowRight style={{ marginLeft: 8 }} />
-            </NavLink>
-            <a href="#howworks" className="secondary-btn">How It Works</a>
-          </div>
-        </div>
-        <div className="hero-image"></div>
-      </section>
+      <section 
+        className="hero-section" 
+        style={{ backgroundImage: `url('/assets/images/home4-slider-03.jpg')` }}
+      >
+        <div className="hero-overlay"></div>
 
-      {/* Features Section */}
-      <section className="features-section">
-        <h2 className="section-title">Precision Agricultural Decision Engine</h2>
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon-badge">
-              <FaLeaf />
+        {/* Hero Bottom Features Strip */}
+        <div className="hero-bottom-container">
+          <div className="hero-bottom-features">
+            <div className="hero-feature">
+              <div className="hero-feature-icon-wrapper">
+                <FiAperture className="hero-feature-icon" />
+              </div>
+              <h3 className="hero-feature-title">AI Leaf Disease Diagnostics</h3>
+              <p className="hero-feature-sub">6 Pathogens & MobileNetV2 Precision</p>
             </div>
-            <h3>Cotton Disease AI Diagnostics</h3>
-            <p>Classifies Aphids, Army worm, Bacterial Blight, Powdery Mildew, Target spot, and Healthy foliage with MobileNetV2.</p>
-          </div>
 
-          <div className="feature-card">
-            <div className="feature-icon-badge">
-              <FaFlask />
+            <div className="hero-feature">
+              <div className="hero-feature-icon-wrapper">
+                <FiCloudRain className="hero-feature-icon" />
+              </div>
+              <h3 className="hero-feature-title">Sindh Real-Time Weather Guard</h3>
+              <p className="hero-feature-sub">Live Wind Drift & Spray Safety Protection</p>
             </div>
-            <h3>Per-Acre Spray Dosage</h3>
-            <p>Provides exact pesticide formulations, active ingredients, application methods, and per-acre dosages tailored for Sindh.</p>
-          </div>
 
-          <div className="feature-card">
-            <div className="feature-icon-badge">
-              <FaCloudSun />
+            <div className="hero-feature">
+              <div className="hero-feature-icon-wrapper">
+                <FiCpu className="hero-feature-icon" />
+              </div>
+              <h3 className="hero-feature-title">Multi-Lingual Qwen AI Engine</h3>
+              <p className="hero-feature-sub">Urdu, Sindhi & Regional Advisory</p>
             </div>
-            <h3>Real-Time Weather Guardrails</h3>
-            <p>Integrates OpenWeatherMap API to detect wind drift, heatwaves, and rain risk before recommending pesticide spray.</p>
-          </div>
 
-          <div className="feature-card">
-            <div className="feature-icon-badge">
-              <FaShieldAlt />
+            <div className="hero-feature">
+              <div className="hero-feature-icon-wrapper">
+                <FiCheckCircle className="hero-feature-icon" />
+              </div>
+              <h3 className="hero-feature-title">Per-Acre Spray & Care Plans</h3>
+              <p className="hero-feature-sub">Exact Pesticide Formulations & Dosage</p>
             </div>
-            <h3>70% Low Confidence Safeguard</h3>
-            <p>Prevents improper chemical spraying by requesting a clearer photograph if model confidence drops below 70%.</p>
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
+      {/* Smart AI Crop Care Section */}
+      <section className="crop-care-section">
+        <div className="crop-care-container">
+          <div className="crop-care-content">
+            <div className="top-tagline">
+              <FaLeaf className="tagline-icon" />
+              <span>PLANTWISE AI</span>
+            </div>
+
+            <h2 className="crop-care-heading">
+              Smart AI Crop Care For A Better Harvest
+            </h2>
+
+            <p className="crop-care-subtext">
+              Instantly detect crop diseases by simply uploading a photo. Get timely treatment recommendations and weather alerts to protect your yield and save costs.
+            </p>
+
+            <div className="crop-care-divider"></div>
+
+            <div className="crop-care-stats">
+              <div className="stat-column">
+                <h3 className="stat-number">95%+</h3>
+                <p className="stat-label">AI Accuracy</p>
+              </div>
+              <div className="stat-column">
+                <h3 className="stat-number">24/7</h3>
+                <p className="stat-label">WhatsApp Support</p>
+              </div>
+              <div className="stat-column">
+                <h3 className="stat-number">3</h3>
+                <p className="stat-label">Major Crops Supported</p>
+              </div>
+            </div>
+
+            <div className="crop-care-cta">
+              <NavLink to="/dashboard" className="crop-care-btn">
+                <div className="btn-icon-wrapper">
+                  <FiAperture />
+                </div>
+                <span>Scan Your Crop</span>
+              </NavLink>
+            </div>
+          </div>
+
+          <div className="crop-care-image-wrapper">
+            <img 
+              src="/assets/images/78522ad5-4b91-43c2-8182-67239aff50a7.png" 
+              alt="Smart AI Crop Care" 
+              className="crop-care-image"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Features Showcase Section */}
+      <FeaturesShowcase />
+
+      {/* How PlantWise Works Section */}
       <section className="how-it-works" id="howworks">
+        {/* Pure Transparent Floating Plant & Leaf Animation Loop */}
+        <div className="howworks-bg-overlay transparent-plant-bg">
+          <div className="plant-float-leaf leaf-1"><FaLeaf /></div>
+          <div className="plant-float-leaf leaf-2"><FaSeedling /></div>
+          <div className="plant-float-leaf leaf-3"><FaLeaf /></div>
+          <div className="plant-float-leaf leaf-4"><FaSeedling /></div>
+          <div className="plant-float-leaf leaf-5"><FaLeaf /></div>
+
+          <div className="spore-particle sp1"></div>
+          <div className="spore-particle sp2"></div>
+          <div className="spore-particle sp3"></div>
+          <div className="spore-particle sp4"></div>
+          <div className="spore-particle sp5"></div>
+          <div className="spore-particle sp6"></div>
+        </div>
+
         <h2 className="section-title">How PlantWise Works</h2>
         <div className="steps-container">
           <div className="step">
@@ -91,31 +156,33 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Community & Stats Section */}
-      <section className="community-section">
-        <h2 className="section-title" style={{ color: 'white' }}>Empowering Sindh Agriculture</h2>
-        <div className="community-stats">
-          <div className="stat-box">
-            <h3>99%+</h3>
-            <p>TFLite Edge Precision</p>
-          </div>
-          <div className="stat-box">
-            <h3>6</h3>
-            <p>Target Cotton Classes</p>
-          </div>
-          <div className="stat-box">
-            <h3><FaCheckCircle style={{ fontSize: '2.5rem' }} /></h3>
-            <p>Weather Safety Guard</p>
-          </div>
-        </div>
-      </section>
+      {/* AI Intelligence Section */}
+      <AiIntelligence />
 
-      {/* Final CTA */}
+      {/* Testimonials Section */}
+      <Testimonials />
+
+      {/* FAQ Section */}
+      <FaqSection />
+
+      {/* Final CTA with Video Background Loop */}
       <section className="final-cta">
-        <h2>Ready to Diagnose Your Crops?</h2>
-        <NavLink to="/dashboard" className="primary-btn large">
-          Open AI Leaf Scanner Now
-        </NavLink>
+        <video 
+          className="cta-bg-video" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+        >
+          <source src="/assets/images/12315473_1920_1080_30fps.mp4" type="video/mp4" />
+        </video>
+        <div className="cta-video-overlay"></div>
+        <div className="cta-content">
+          <h2>Ready to Diagnose Your Crops?</h2>
+          <NavLink to="/dashboard" className="primary-btn large">
+            Open AI Leaf Scanner Now
+          </NavLink>
+        </div>
       </section>
     </div>
   );

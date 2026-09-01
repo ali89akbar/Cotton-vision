@@ -48,7 +48,7 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(4),
   },
   mainTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     fontWeight: 800,
     fontSize: "2.5rem",
     background: "linear-gradient(135deg, #064e3b 0%, #059669 100%)",
@@ -85,7 +85,7 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "2rem",
     fontWeight: 800,
     color: "#064e3b",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
   },
   statLabel: {
     fontSize: "0.85rem",
@@ -129,7 +129,7 @@ const useStyles = makeStyles((theme) => ({
   cityHeaderTitle: {
     fontWeight: 800,
     color: "#0f172a",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     fontSize: "1.35rem",
     display: "flex",
     alignItems: "center",

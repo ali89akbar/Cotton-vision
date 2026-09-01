@@ -98,7 +98,7 @@ const DiseaseTitle = styled.h2`
   font-weight: 800;
   margin: 4px 0;
   color: #ffffff;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Bricolage Grotesque', sans-serif;
 `;
 
 const LocationBadge = styled.span`
@@ -134,7 +134,7 @@ const ChemicalTitle = styled.div`
 const ChemicalText = styled.div`
   font-weight: 700;
   color: #0f172a;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 0.95rem;
 `;
 

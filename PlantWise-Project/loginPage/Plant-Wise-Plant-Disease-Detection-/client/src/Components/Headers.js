@@ -3,9 +3,11 @@ import './header.css';
 import { NavLink } from 'react-router-dom';
 import axios from 'axios';
 import { FaLeaf, FaBars, FaTimes } from 'react-icons/fa';
+import { FiSearch, FiBell, FiGrid, FiUser } from 'react-icons/fi';
 
 const Headers = () => {
     const [userdata, setUserdata] = useState({});
+    const [imgError, setImgError] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
 
     const getUser = async () => {
@@ -33,10 +35,10 @@ const Headers = () => {
         <header className="header">
             <nav className="navbar">
                 <NavLink to="/" className="logo-container">
-                    <div className="logo-badge">
-                        <FaLeaf />
+                    <div className="logo-icon-wrapper">
+                        <FaLeaf className="logo-icon" />
                     </div>
-                    <span className="logo-text">Plant<span>Wise</span></span>
+                    <span className="logo-text">PlantWise</span>
                 </NavLink>
 
                 <div className="menu-icon" onClick={toggleMenu}>
@@ -45,22 +47,45 @@ const Headers = () => {
 
                 <ul className={menuOpen ? 'nav-links open' : 'nav-links'}>
                     <li><NavLink to="/" onClick={() => setMenuOpen(false)}>Home</NavLink></li>
-                    <li><NavLink to="/dashboard" className="model-pill" onClick={() => setMenuOpen(false)}>AI Disease Scanner</NavLink></li>
-                    <li><NavLink to="/outbreak-radar" onClick={() => setMenuOpen(false)}>🗺️ Outbreak Radar</NavLink></li>
+                    <li><NavLink to="/dashboard" onClick={() => setMenuOpen(false)}>AI Scanner</NavLink></li>
+                    <li><NavLink to="/outbreak-radar" onClick={() => setMenuOpen(false)}>Outbreak Radar</NavLink></li>
 
-                    {Object.keys(userdata).length > 0 ? (
+                    {Object.keys(userdata).length > 0 && (
                         <>
                             <li><NavLink to="/saved-plants" onClick={() => setMenuOpen(false)}>Saved Plants</NavLink></li>
                             <li><NavLink to="/badge-progress" onClick={() => setMenuOpen(false)}>Badge Progress</NavLink></li>
                             <li><NavLink to="/social-media" onClick={() => setMenuOpen(false)}>Community</NavLink></li>
-                            <li className="user-name">{userdata?.displayName}</li>
-                            {userdata?.image && <li><img src={userdata?.image} className="user-img" alt="user" /></li>}
-                            <li onClick={logout} className="logout-btn">Logout</li>
                         </>
-                    ) : (
-                        <li><NavLink to="/login" onClick={() => setMenuOpen(false)}>Login</NavLink></li>
                     )}
                 </ul>
+
+                <div className="nav-actions">
+                    <button className="icon-btn" title="Search"><FiSearch /></button>
+                    <button className="icon-btn" title="Notifications"><FiBell /></button>
+                    <button className="icon-btn accent-icon" title="Quick Tools"><FiGrid /></button>
+
+                    {Object.keys(userdata).length > 0 ? (
+                        <div className="user-profile-wrapper">
+                            {userdata?.image && !imgError ? (
+                                <img 
+                                    src={userdata.image} 
+                                    className="user-avatar-btn" 
+                                    alt={userdata.displayName || "User Profile"} 
+                                    referrerPolicy="no-referrer"
+                                    onError={() => setImgError(true)}
+                                    title={userdata.displayName || "User Profile"}
+                                />
+                            ) : (
+                                <div className="user-avatar-fallback" title={userdata.displayName || "User Profile"}>
+                                    <FiUser />
+                                </div>
+                            )}
+                            <button onClick={logout} className="action-btn logout-btn">Logout</button>
+                        </div>
+                    ) : (
+                        <NavLink to="/dashboard" className="action-btn cta-btn">Scan Leaf Now</NavLink>
+                    )}
+                </div>
             </nav>
         </header>
     );

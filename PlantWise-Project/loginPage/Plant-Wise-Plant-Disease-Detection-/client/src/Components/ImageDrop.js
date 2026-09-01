@@ -79,7 +79,7 @@ const useStyles = makeStyles((theme) => ({
     letterSpacing: "0.5px",
   },
   mainTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     fontWeight: 800,
     fontSize: "2.5rem",
     background: "linear-gradient(135deg, #064e3b 0%, #059669 100%)",
@@ -177,7 +177,7 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(3),
   },
   urduHeader: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     fontSize: "1.6rem",
     fontWeight: 700,
     color: "#a7f3d0",
@@ -194,7 +194,7 @@ const useStyles = makeStyles((theme) => ({
     boxShadow: "0 8px 20px rgba(5, 150, 105, 0.15)",
   },
   qwenRtlText: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     fontSize: "1.3rem",
     fontWeight: 700,
     color: "#064e3b",
@@ -218,7 +218,7 @@ const useStyles = makeStyles((theme) => ({
     boxShadow: "0 4px 15px rgba(0, 0, 0, 0.04)",
   },
   remedyTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     fontWeight: 700,
     color: "#064e3b",
     display: "flex",
@@ -278,7 +278,7 @@ const useStyles = makeStyles((theme) => ({
     padding: "12px 28px",
     fontSize: "0.95rem",
     fontWeight: 700,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     textTransform: "uppercase",
     background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
     color: "#ffffff",
@@ -292,7 +292,7 @@ const useStyles = makeStyles((theme) => ({
     padding: "12px 28px",
     fontSize: "0.95rem",
     fontWeight: 700,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     textTransform: "uppercase",
     background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
     color: "#ffffff",

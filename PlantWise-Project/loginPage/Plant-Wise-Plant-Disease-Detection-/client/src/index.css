@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400;1,700&display=swap');
 
 :root {
   --primary-emerald: #059669;
@@ -19,8 +19,8 @@
   --text-muted: #475569;
   --text-emerald: #047857;
 
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-heading: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
 
   --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.35);
   --transition-base: all 0.2s ease-in-out;
@@ -32,8 +32,33 @@
   padding: 0;
 }
 
-html {
+html, body {
+  scroll-behavior: smooth !important;
+}
+
+* {
   scroll-behavior: smooth;
+}
+
+/* Lenis Buttery Smooth Momentum Scroll CSS */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 body {
@@ -47,9 +72,20 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  line-height: 1.25;
+p, span, button, input, select, textarea, a {
+  font-family: var(--font-body);
+}
+
+/* Primary Font: Major Headings */
+h1, h2, h3 {
+  font-family: 'Bricolage Grotesque', sans-serif !important;
+  line-height: 1.2;
+}
+
+/* Secondary Font: Sub-Headings */
+h4, h5, h6 {
+  font-family: var(--font-body);
+  line-height: 1.3;
 }
 
 /* Global focus ring for accessibility */
