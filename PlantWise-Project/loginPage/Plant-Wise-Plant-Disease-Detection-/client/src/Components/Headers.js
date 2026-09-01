@@ -49,14 +49,10 @@ const Headers = () => {
                     <li><NavLink to="/" onClick={() => setMenuOpen(false)}>Home</NavLink></li>
                     <li><NavLink to="/dashboard" onClick={() => setMenuOpen(false)}>AI Scanner</NavLink></li>
                     <li><NavLink to="/outbreak-radar" onClick={() => setMenuOpen(false)}>Outbreak Radar</NavLink></li>
-
-                    {Object.keys(userdata).length > 0 && (
-                        <>
-                            <li><NavLink to="/saved-plants" onClick={() => setMenuOpen(false)}>Saved Plants</NavLink></li>
-                            <li><NavLink to="/badge-progress" onClick={() => setMenuOpen(false)}>Badge Progress</NavLink></li>
-                            <li><NavLink to="/social-media" onClick={() => setMenuOpen(false)}>Community</NavLink></li>
-                        </>
-                    )}
+                    <li><NavLink to="/saved-plants" onClick={() => setMenuOpen(false)}>Saved Plants</NavLink></li>
+                    <li><NavLink to="/social-media" onClick={() => setMenuOpen(false)}>Community</NavLink></li>
+                    <li><NavLink to="/badge-progress" onClick={() => setMenuOpen(false)}>Badges</NavLink></li>
+                    <li><NavLink to="/ar" onClick={() => setMenuOpen(false)}>3D Gallery</NavLink></li>
                 </ul>
 
                 <div className="nav-actions">
@@ -83,7 +79,7 @@ const Headers = () => {
                             <button onClick={logout} className="action-btn logout-btn">Logout</button>
                         </div>
                     ) : (
-                        <NavLink to="/dashboard" className="action-btn cta-btn">Scan Leaf Now</NavLink>
+                        <NavLink to="/login" className="action-btn cta-btn">Login / Sign Up</NavLink>
                     )}
                 </div>
             </nav>
