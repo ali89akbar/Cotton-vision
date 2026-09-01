@@ -14,6 +14,10 @@ import {
   Fab,
   Drawer,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@material-ui/core";
 import { DropzoneArea } from "material-ui-dropzone";
 import {
@@ -44,7 +48,7 @@ import axios from "axios";
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
     minHeight: "100vh",
-    paddingTop: theme.spacing(5),
+    paddingTop: "7.5rem",
     paddingBottom: theme.spacing(10),
     background: "linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)",
   },
@@ -405,10 +409,31 @@ export const ImageUpload = () => {
     timeout: 8000,
   });
 
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  useEffect(() => {
+    axios.get('http://localhost:6005/login/sucess', { withCredentials: true })
+      .then(res => {
+        if (res.data && res.data.user) {
+          setUser(res.data.user);
+        }
+        setAuthLoading(false);
+      })
+      .catch(() => {
+        setAuthLoading(false);
+      });
+  }, []);
+
   const handleFileChange = (files) => {
     if (files.length === 0) {
       setSelectedFile(null);
       setData(null);
+      return;
+    }
+    if (!user && !authLoading) {
+      setShowLoginPrompt(true);
       return;
     }
     setSelectedFile(files[0]);
@@ -416,6 +441,10 @@ export const ImageUpload = () => {
   };
 
   const sendFile = async (fileToUpload = selectedFile, cityToUse = cityName, langToUse = language) => {
+    if (!user && !authLoading) {
+      setShowLoginPrompt(true);
+      return;
+    }
     if (!fileToUpload) return;
 
     const formData = new FormData();
@@ -803,14 +832,24 @@ export const ImageUpload = () => {
 
         {/* DROPZONE UPLOAD AREA */}
         {!selectedFile && (
-          <DropzoneArea
-            acceptedFiles={["image/*"]}
-            dropzoneText={"📸 Drag & Drop a cotton leaf photo here, or click to browse files"}
-            onChange={handleFileChange}
-            filesLimit={1}
-            showAlerts={false}
-            dropzoneClass={classes.dropzoneCustom}
-          />
+          <div 
+            onClickCapture={(e) => {
+              if (!user && !authLoading) {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowLoginPrompt(true);
+              }
+            }}
+          >
+            <DropzoneArea
+              acceptedFiles={["image/*"]}
+              dropzoneText={"📸 Drag & Drop a cotton leaf photo here, or click to browse files"}
+              onChange={handleFileChange}
+              filesLimit={1}
+              showAlerts={false}
+              dropzoneClass={classes.dropzoneCustom}
+            />
+          </div>
         )}
 
         {/* LOADING SPINNER */}
@@ -829,6 +868,30 @@ export const ImageUpload = () => {
         {/* RESULTS PANEL */}
         {data && !isLoading && (
           <div className={classes.resultsContainer}>
+            {/* SCANNED LEAF PHOTO PREVIEW CARD */}
+            {selectedFile && (
+              <div style={{ background: '#ffffff', border: '1.5px solid #a7f3d0', borderRadius: '24px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(5, 150, 105, 0.12)', display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+                <div style={{ width: '160px', height: '160px', borderRadius: '18px', overflow: 'hidden', border: '3px solid #059669', flexShrink: 0, boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>
+                  <img 
+                    src={URL.createObjectURL(selectedFile)} 
+                    alt="Uploaded Cotton Leaf" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#d1fae5', color: '#064e3b', fontWeight: 800, fontSize: '0.8rem', padding: '4px 14px', borderRadius: '20px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    <FaCheckCircle style={{ color: '#059669' }} /> <span>SCANNED CROP IMAGE</span>
+                  </div>
+                  <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 800, color: '#064e3b', margin: '4px 0 8px 0' }}>
+                    {selectedFile.name}
+                  </h3>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
+                    File Size: {(selectedFile.size / 1024).toFixed(1)} KB | Target Location: <strong>{cityName}</strong>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* LOW CONFIDENCE ALERT */}
             {data.status === "LOW_CONFIDENCE" && (
               <div className={classes.lowConfidenceAlert}>
@@ -1137,6 +1200,39 @@ export const ImageUpload = () => {
           </IconButton>
         </Box>
       </Drawer>
+
+      {/* LOGIN RESTRICTION DIALOG FOR UPLOADING */}
+      <Dialog 
+        open={showLoginPrompt} 
+        onClose={() => setShowLoginPrompt(false)} 
+        PaperProps={{ style: { borderRadius: 24, padding: 20, maxWidth: 460, textAlign: 'center' } }}
+      >
+        <DialogTitle style={{ textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, borderRadius: '50%', background: '#e6f4ea', color: '#059669', fontSize: 32, margin: '0 auto 12px auto' }}>
+            🔒
+          </div>
+          <Typography variant="h5" style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+            Registered Farmer Access Only
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" style={{ color: '#475569', lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
+            Please log in with your account to upload crop leaf photos and generate instant AI disease diagnostics.
+          </Typography>
+        </DialogContent>
+        <DialogActions style={{ justifyContent: 'center', paddingBottom: 16, paddingTop: 16 }}>
+          <Button
+            variant="contained"
+            style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', fontWeight: 700, borderRadius: 30, padding: '12px 28px', fontFamily: "'DM Sans', sans-serif" }}
+            onClick={() => window.location.href = '/login'}
+          >
+            🔑 LOGIN TO SCAN LEAF
+          </Button>
+          <Button onClick={() => setShowLoginPrompt(false)} style={{ color: '#64748b', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -63,7 +63,7 @@ const useStyles = makeStyles((theme) => ({
   root: {
     maxWidth: 800,
     margin: '0 auto',
-    padding: theme.spacing(3),
+    padding: '7.5rem 1.5rem 3rem 1.5rem',
     background: 'linear-gradient(to bottom, #f5f7fa 0%, #e4f5e8 100%)',
     minHeight: '100vh'
   },

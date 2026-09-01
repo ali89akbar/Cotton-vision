@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Container,
   Card,
@@ -8,6 +9,7 @@ import {
   Grid,
   TextField,
   Button,
+  CircularProgress,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import {
@@ -28,7 +30,7 @@ import {
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
     minHeight: "100vh",
-    paddingTop: theme.spacing(5),
+    paddingTop: "7.5rem",
     paddingBottom: theme.spacing(10),
     background: "linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)",
   },
@@ -247,6 +249,54 @@ const OutbreakRadar = () => {
   const classes = useStyles();
   const [searchFilter, setSearchFilter] = useState("");
   const [selectedRiskFilter, setSelectedRiskFilter] = useState("ALL");
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get('http://localhost:6005/login/sucess', { withCredentials: true })
+      .then(res => {
+        if (res.data && res.data.user) {
+          setUser(res.data.user);
+        }
+        setAuthLoading(false);
+      })
+      .catch(() => {
+        setAuthLoading(false);
+      });
+  }, []);
+
+  if (authLoading) {
+    return (
+      <div style={{ paddingTop: '7.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <CircularProgress style={{ color: '#059669' }} />
+      </div>
+    );
+  }
+
+  if (!user && !authLoading) {
+    return (
+      <div style={{ paddingTop: '7.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', background: 'linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)' }}>
+        <Card style={{ padding: 40, textAlign: 'center', borderRadius: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: 500, background: '#ffffff', margin: '0 1rem' }}>
+          <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, borderRadius: '50%', background: '#e6f4ea', color: '#059669', fontSize: 32, marginBottom: 16 }}>
+            🌱
+          </div>
+          <Typography variant="h5" style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+            🔒 Registered Farmer Access Only
+          </Typography>
+          <Typography variant="body1" style={{ marginTop: 10, color: '#475569', lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
+            Please log in with your account to access the Outbreak Radar, view regional infestation heatmaps, and monitor crop health alerts.
+          </Typography>
+          <Button
+            variant="contained"
+            style={{ marginTop: 24, background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', fontWeight: 700, borderRadius: 30, padding: '12px 30px', fontFamily: "'DM Sans', sans-serif" }}
+            onClick={() => window.location.href = '/login'}
+          >
+            🔑 LOGIN TO ACCESS OUTBREAK RADAR
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   const filteredCities = SINDH_OUTBREAK_DATA.filter((item) => {
     const matchesSearch =

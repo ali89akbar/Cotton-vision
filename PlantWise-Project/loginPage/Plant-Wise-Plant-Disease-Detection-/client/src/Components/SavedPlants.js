@@ -29,7 +29,7 @@ const fadeIn = keyframes`
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 7.5rem 1rem 3rem 1rem;
   animation: ${fadeIn} 0.3s ease-out;
 `;
 
@@ -350,7 +350,22 @@ const SavedPlants = () => {
   const [predictions, setPredictions] = useState([]);
   const [checkedMap, setCheckedMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const notify = useNotification();
+
+  useEffect(() => {
+    axios.get('http://localhost:6005/login/sucess', { withCredentials: true })
+      .then(res => {
+        if (res.data && res.data.user) {
+          setUser(res.data.user);
+        }
+        setAuthLoading(false);
+      })
+      .catch(() => {
+        setAuthLoading(false);
+      });
+  }, []);
 
   const getStorageKey = (prediction, index) => {
     const id = prediction._id || prediction.className;
@@ -392,8 +407,34 @@ const SavedPlants = () => {
   };
 
   useEffect(() => {
-    fetchPredictions();
-  }, []);
+    if (user) {
+      fetchPredictions();
+    }
+  }, [user]);
+
+  if (!user && !authLoading) {
+    return (
+      <div style={{ paddingTop: '7.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', background: 'linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)' }}>
+        <div style={{ padding: 40, textAlign: 'center', borderRadius: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: 500, background: '#ffffff', margin: '0 1rem' }}>
+          <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, borderRadius: '50%', background: '#e6f4ea', color: '#059669', fontSize: 32, marginBottom: 16 }}>
+            📌
+          </div>
+          <h2 style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.5rem', marginBottom: 10 }}>
+            🔒 Registered Farmer Access Only
+          </h2>
+          <p style={{ marginTop: 10, color: '#475569', lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif", fontSize: '0.95rem' }}>
+            Please log in with your account to view your saved crop scans, per-acre treatment checklists, and spray routine progress.
+          </p>
+          <button
+            style={{ marginTop: 24, background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', fontWeight: 700, borderRadius: 30, padding: '12px 30px', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+            onClick={() => window.location.href = '/login'}
+          >
+            🔑 LOGIN TO ACCESS SAVED PLANTS
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleStepToggle = async (plantIndex, stepIndex) => {
     const currentPlant = predictions[plantIndex];

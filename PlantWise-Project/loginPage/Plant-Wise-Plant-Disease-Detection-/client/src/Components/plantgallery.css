@@ -4,7 +4,7 @@
 
 .gallery-container {
   text-align: center;
-  padding: 3rem 1.5rem;
+  padding: 7.5rem 1.5rem 3rem 1.5rem;
   min-height: 80vh;
   background: linear-gradient(180deg, #f0fdf4 0%, #f8fafc 100%);
 }
