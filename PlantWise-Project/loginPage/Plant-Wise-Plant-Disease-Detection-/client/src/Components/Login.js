@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { FaLeaf, FaSeedling, FaShieldAlt } from 'react-icons/fa';
 import { FiUser, FiLock, FiAperture } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
@@ -111,7 +112,7 @@ const Login = () => {
           </button>
 
           <p className="message">
-            New to PlantWise? <a href="/#howworks">Explore how it works</a>
+            New to PlantWise? <Link to="/register" style={{ color: '#059669', fontWeight: 700, textDecoration: 'none', transition: 'color 0.2s' }}>Register here</Link>
           </p>
         </div>
       </motion.div>

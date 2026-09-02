@@ -1,5 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400;1,700&display=swap');
 
+@font-face {
+  font-family: 'Jameel Noori Nastaleeq';
+  src: url('./assets/jameel-noori-nastaleeq.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Jameel Noori Nastaleeq Regular';
+  src: url('./assets/jameel-noori-nastaleeq.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JameelNooriNastaliq';
+  src: url('./assets/jameel-noori-nastaleeq.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.urdu-font {
+  font-family: 'Jameel Noori Nastaleeq', 'Jameel Noori Nastaleeq Regular', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif !important;
+  line-height: 2.2 !important;
+}
+
 :root {
   --primary-emerald: #059669;
   --primary-dark: #064e3b;

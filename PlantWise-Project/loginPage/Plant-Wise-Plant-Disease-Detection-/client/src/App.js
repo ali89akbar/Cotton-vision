@@ -2,6 +2,7 @@ import './App.css';
 import Home from './Components/Home';
 import Headers from './Components/Headers';
 import Login from './Components/Login';
+import CompleteProfile from './Components/CompleteProfile';
 import Dashboard from './Components/Dashboard';
 import SavedPlants from './Components/SavedPlants';
 import OutbreakRadar from './Components/OutbreakRadar';
@@ -53,6 +54,8 @@ function App() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<CompleteProfile />} />
+                <Route path="/complete-profile" element={<CompleteProfile />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/outbreak-radar" element={<OutbreakRadar />} />
                 <Route path="/social-media" element={<SocialMedia />} /> 

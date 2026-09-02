@@ -413,6 +413,28 @@ export const ImageUpload = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
+  // Progressive Profiling State
+  const [isProfileComplete, setIsProfileComplete] = useState(() => {
+    const saved = localStorage.getItem('plantwise_user_profile');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return !!parsed.isProfileComplete;
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({
+    whatsappNumber: '',
+    mainCrop: 'Cotton',
+    city: 'Khairpur',
+    landSize: ''
+  });
+
   useEffect(() => {
     axios.get('http://localhost:6005/login/sucess', { withCredentials: true })
       .then(res => {
@@ -719,120 +741,196 @@ export const ImageUpload = () => {
   };
 
   return (
-    <Container className={classes.mainContainer}>
-      <Card className={classes.glassCard}>
-        {/* HEADER SECTION */}
-        <div className={classes.headerSection}>
-          <div className={classes.hackathonBadge}>
-            <FaTrophy /> Alibaba Cloud Qwen AI Hackathon Product
-          </div>
-
-          <Typography variant="h3" className={classes.mainTitle}>
-            Plantwise Regional AI Diagnostics
-          </Typography>
-          <Typography variant="body1" className={classes.subtitle}>
-            Target Crop: <strong>Cotton (Gossypium hirsutum)</strong> | Real-Time Agronomic Spray Advisory & Alibaba Qwen LLM Engine
-          </Typography>
-
-          <div className={classes.statusBar}>
-            <Chip
-              icon={<FaShieldAlt style={{ color: "#059669" }} />}
-              label="OpenWeatherMap API Connected"
-              variant="outlined"
-              size="small"
-              style={{ borderColor: "#a7f3d0", fontWeight: 600 }}
-            />
-            <Chip
-              icon={<FaBrain style={{ color: "#059669" }} />}
-              label="Alibaba Qwen-Plus LLM Engine (6 Languages)"
-              variant="outlined"
-              size="small"
-              style={{ borderColor: "#a7f3d0", fontWeight: 600 }}
-            />
-            <Chip
-              label="⚡ Model Latency: 118ms"
-              variant="outlined"
-              size="small"
-              style={{ borderColor: "#bfdbfe", color: "#1e40af", fontWeight: 600 }}
-            />
-          </div>
-        </div>
-
-        {/* LOCATION SELECTOR CARD */}
-        <div className={classes.locationCard}>
-          <Box display="flex" alignItems="center" gridGap={10} mb={1.5}>
-            <FaSearchLocation style={{ color: "#059669", fontSize: "1.3rem" }} />
-            <Typography variant="subtitle1" style={{ fontWeight: 700, color: "#0f172a" }}>
-              Target Field Location (City / Village)
-            </Typography>
-          </Box>
-          <TextField
-            fullWidth
-            variant="outlined"
-            size="small"
-            value={cityName}
-            onChange={(e) => setCityName(e.target.value)}
-            placeholder="Type city or village name e.g. Khairpur, Sukkur, Gambat..."
-            style={{ background: "#ffffff", borderRadius: "10px" }}
-          />
-
-          <div className={classes.quickPillGroup}>
-            <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
-              Quick Select Sindh Cities:
-            </Typography>
-            {SINDH_CITIES.map((city) => (
-              <Chip
-                key={city}
-                label={city}
-                clickable
-                size="small"
-                color={cityName.toLowerCase() === city.toLowerCase() ? "primary" : "default"}
-                onClick={() => handleQuickCitySelect(city)}
-                style={{
-                  fontWeight: 600,
-                  backgroundColor: cityName.toLowerCase() === city.toLowerCase() ? "#059669" : "#e2e8f0",
-                }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* DEDICATED PADDED LANGUAGE SELECTOR CARD */}
-        <div className={classes.languageCard}>
-          <Box display="flex" alignItems="center" gridGap={10} mb={1}>
-            <FaLanguage style={{ color: "#059669", fontSize: "1.5rem" }} />
-            <div>
-              <Typography variant="subtitle1" style={{ fontWeight: 800, color: "#064e3b" }}>
-                Select Advisory Language / زبان جو انتخاب
-              </Typography>
-              <Typography variant="caption" style={{ color: "#475569" }}>
-                Choose your preferred regional language for Alibaba Qwen AI farmer recommendations
-              </Typography>
+    <div style={{ minHeight: '100vh', paddingTop: '8.5rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem', background: 'linear-gradient(180deg, #f0fdf4 0%, #f8fafc 50%, #e2e8f0 100%)' }}>
+      <div style={{ maxWidth: '1024px', margin: '0 auto', background: '#ffffff', borderRadius: '32px', padding: '3rem 2.5rem', boxShadow: '0 25px 50px -12px rgba(5, 150, 105, 0.08)', border: '1px solid rgba(209, 250, 229, 0.8)', transition: 'all 0.3s ease' }}>
+        
+        {/* PROGRESSIVE PROFILING ALERT BANNER */}
+        {!isProfileComplete && (
+          <div 
+            style={{
+              background: '#fefce8',
+              border: '1.5px solid #fef08a',
+              borderRadius: '20px',
+              padding: '1rem 1.5rem',
+              marginBottom: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              boxShadow: '0 4px 15px rgba(234, 179, 8, 0.08)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#fef08a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', color: '#854d0e', flexShrink: 0 }}>
+                ⚠️
+              </div>
+              <div>
+                <h4 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, color: '#854d0e', fontSize: '0.98rem', margin: 0 }}>
+                  Welcome to PlantWise!
+                </h4>
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.85rem', color: '#a16207', margin: '2px 0 0 0', lineHeight: 1.4 }}>
+                  To receive automated weather safety alerts and personalized crop diagnostics on WhatsApp, please complete your profile.
+                </p>
+              </div>
             </div>
-          </Box>
 
-          <div className={classes.langButtonContainer}>
-            {LANGUAGES.map((lang) => (
-              <Chip
-                key={lang.code}
-                label={lang.label}
-                clickable
-                className={classes.langPill}
-                onClick={() => handleLanguageChange(lang.code)}
-                style={{
-                  backgroundColor: language === lang.code ? "#059669" : "#ffffff",
-                  color: language === lang.code ? "#ffffff" : "#0f172a",
-                  border: language === lang.code ? "none" : "1px solid #cbd5e1",
-                  boxShadow: language === lang.code ? "0 4px 12px rgba(5, 150, 105, 0.3)" : "none",
-                }}
-              />
-            ))}
+            <button
+              type="button"
+              onClick={() => window.location.href = '/complete-profile'}
+              style={{
+                background: '#059669',
+                color: '#ffffff',
+                fontFamily: "'DM Sans', sans-serif",
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                padding: '9px 20px',
+                borderRadius: '50px',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                whiteSpace: 'nowrap',
+                transition: 'transform 0.2s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              👤 Complete Profile Now
+            </button>
+          </div>
+        )}
+
+        {/* 2. HEADER SECTION */}
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(240, 253, 244, 0.95)', border: '1px solid #bbf7d0', color: '#166534', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', borderRadius: '50px', padding: '6px 18px', boxShadow: '0 2px 8px rgba(5, 150, 105, 0.05)', marginBottom: '1rem' }}>
+            ✨ POWERED BY ALIBABA QWEN AI
+          </div>
+
+          <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: '2.75rem', color: '#0f172a', letterSpacing: '-0.5px', margin: '0 0 0.75rem 0', lineHeight: 1.2 }}>
+            Plantwise Regional <span style={{ color: '#059669' }}>AI Diagnostics</span>
+          </h1>
+
+          <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#64748b', fontSize: '1rem', maxWidth: '640px', margin: '0 auto 1.5rem auto', lineHeight: 1.6 }}>
+            Target Crop: <strong style={{ color: '#1e293b', fontWeight: 700 }}>Cotton (Gossypium hirsutum)</strong> | Real-Time Agronomic Spray Advisory & Alibaba Qwen LLM Engine
+          </p>
+
+          <div style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '10px', margin: '0 auto' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '50px', padding: '6px 16px', fontSize: '0.78rem', fontWeight: 600, color: '#475569', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+              <span>🌦️</span> <span>Live Microclimate Telemetry</span>
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '50px', padding: '6px 16px', fontSize: '0.78rem', fontWeight: 600, color: '#475569', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+              <span>🧠</span> <span>Multi-regional Advisory Active</span>
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '50px', padding: '6px 16px', fontSize: '0.78rem', fontWeight: 600, color: '#475569', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+              <span>⚡</span> <span>Inference Speed: <strong style={{ color: '#0f172a', fontWeight: 800 }}>118ms</strong></span>
+            </div>
           </div>
         </div>
 
-        {/* DROPZONE UPLOAD AREA */}
+        {/* 3. CONTROLS GRID (LOCATION & LANGUAGE) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.75rem', marginBottom: '2.5rem' }}>
+          
+          {/* LOCATION FIELD */}
+          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '1.5rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <FaSearchLocation style={{ color: '#059669', fontSize: '1.25rem' }} />
+                <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: '#1e293b', fontSize: '1.1rem', margin: 0 }}>
+                  Target Field Location
+                </h3>
+              </div>
+              <input
+                type="text"
+                value={cityName}
+                onChange={(e) => setCityName(e.target.value)}
+                placeholder="Type city or village name e.g. Khairpur, Sukkur..."
+                style={{ width: '100%', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '12px 16px', color: '#1e293b', fontSize: '0.9rem', outline: 'none', transition: 'all 0.2s', marginBottom: '16px' }}
+              />
+            </div>
+
+            <div>
+              <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                Quick Select Sindh Cities:
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {SINDH_CITIES.map((city) => {
+                  const isActive = cityName.toLowerCase() === city.toLowerCase();
+                  return (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => handleQuickCitySelect(city)}
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        padding: '6px 14px',
+                        borderRadius: '50px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        border: isActive ? '1px solid #059669' : '1px solid #e2e8f0',
+                        background: isActive ? '#059669' : '#ffffff',
+                        color: isActive ? '#ffffff' : '#475569',
+                        boxShadow: isActive ? '0 4px 10px rgba(5, 150, 105, 0.25)' : 'none',
+                      }}
+                    >
+                      {city}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* LANGUAGE SELECTOR */}
+          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '1.5rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <FaLanguage style={{ color: '#059669', fontSize: '1.4rem' }} />
+                <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: '#1e293b', fontSize: '1.1rem', margin: 0 }}>
+                  Select Advisory Language <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: '0.85rem' }}>/ زبان جو انتخاب</span>
+                </h3>
+              </div>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#64748b', margin: '0 0 16px 0' }}>
+                Choose preferred regional language for Alibaba Qwen AI recommendations
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              {LANGUAGES.map((lang) => {
+                const isActive = language === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => handleLanguageChange(lang.code)}
+                    style={{
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      padding: '10px 8px',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      transition: 'all 0.2s ease',
+                      border: isActive ? '1px solid #064e3b' : '1px solid #e2e8f0',
+                      background: isActive ? '#064e3b' : '#ffffff',
+                      color: isActive ? '#ffffff' : '#334155',
+                      boxShadow: isActive ? '0 4px 12px rgba(6, 78, 59, 0.25)' : 'none',
+                    }}
+                  >
+                    {lang.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
+
+        {/* 4. MODERN DRAG & DROP ZONE */}
         {!selectedFile && (
           <div 
+            style={{ width: '100%', marginBottom: '2rem' }}
             onClickCapture={(e) => {
               if (!user && !authLoading) {
                 e.preventDefault();
@@ -841,14 +939,53 @@ export const ImageUpload = () => {
               }
             }}
           >
-            <DropzoneArea
-              acceptedFiles={["image/*"]}
-              dropzoneText={"📸 Drag & Drop a cotton leaf photo here, or click to browse files"}
-              onChange={handleFileChange}
-              filesLimit={1}
-              showAlerts={false}
-              dropzoneClass={classes.dropzoneCustom}
-            />
+            <div 
+              style={{
+                position: 'relative',
+                minHeight: '260px',
+                background: '#F4F9F4',
+                border: '2px dashed #a7f3d0',
+                borderRadius: '24px',
+                padding: '2.5rem 1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#ebf5eb';
+                e.currentTarget.style.borderColor = '#059669';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#F4F9F4';
+                e.currentTarget.style.borderColor = '#a7f3d0';
+              }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => e.target.files && handleFileChange(e.target.files)}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+              />
+              
+              <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: '#ffffff', boxShadow: '0 8px 20px rgba(5, 150, 105, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', marginBottom: '1rem', border: '1px solid #d1fae5', transition: 'transform 0.3s ease' }}>
+                <FaCloudSun style={{ fontSize: '2rem', color: '#059669' }} />
+              </div>
+
+              <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, color: '#0f172a', fontSize: '1.25rem', margin: '0 0 4px 0' }}>
+                Drag & drop your cotton leaf photo here
+              </h3>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#64748b', fontSize: '0.85rem', margin: '0 0 1.25rem 0' }}>
+                Supports JPG, PNG, WEBP files (Max file size 10MB)
+              </p>
+
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#059669', color: '#ffffff', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '0.88rem', padding: '10px 24px', borderRadius: '50px', boxShadow: '0 8px 20px rgba(5, 150, 105, 0.25)', transition: 'all 0.2s ease' }}>
+                📸 Browse Files
+              </span>
+            </div>
           </div>
         )}
 
@@ -864,37 +1001,12 @@ export const ImageUpload = () => {
             </Typography>
           </div>
         )}
-
-        {/* RESULTS PANEL */}
         {data && !isLoading && (
-          <div className={classes.resultsContainer}>
-            {/* SCANNED LEAF PHOTO PREVIEW CARD */}
-            {selectedFile && (
-              <div style={{ background: '#ffffff', border: '1.5px solid #a7f3d0', borderRadius: '24px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(5, 150, 105, 0.12)', display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-                <div style={{ width: '160px', height: '160px', borderRadius: '18px', overflow: 'hidden', border: '3px solid #059669', flexShrink: 0, boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>
-                  <img 
-                    src={URL.createObjectURL(selectedFile)} 
-                    alt="Uploaded Cotton Leaf" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#d1fae5', color: '#064e3b', fontWeight: 800, fontSize: '0.8rem', padding: '4px 14px', borderRadius: '20px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                    <FaCheckCircle style={{ color: '#059669' }} /> <span>SCANNED CROP IMAGE</span>
-                  </div>
-                  <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 800, color: '#064e3b', margin: '4px 0 8px 0' }}>
-                    {selectedFile.name}
-                  </h3>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
-                    File Size: {(selectedFile.size / 1024).toFixed(1)} KB | Target Location: <strong>{cityName}</strong>
-                  </p>
-                </div>
-              </div>
-            )}
-
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem', marginTop: '2rem' }}>
+            
             {/* LOW CONFIDENCE ALERT */}
             {data.status === "LOW_CONFIDENCE" && (
-              <div className={classes.lowConfidenceAlert}>
+              <div style={{ gridColumn: 'span 12', background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '24px', padding: '1.5rem', color: '#991b1b' }}>
                 <Box display="flex" alignItems="center" gridGap={10} mb={1}>
                   <FaExclamationTriangle style={{ fontSize: "1.5rem", color: "#dc2626" }} />
                   <Typography variant="h6" style={{ fontWeight: 800 }}>
@@ -908,241 +1020,312 @@ export const ImageUpload = () => {
               </div>
             )}
 
-            {/* SUCCESS ADVISORY */}
+            {/* SUCCESS BENTO BOX GRID ITEMS */}
             {data.status === "SUCCESS" && (
               <>
-                {/* DISEASE HEADER CARD */}
-                <div className={classes.diseaseCard}>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gridGap={16}>
-                    <div>
-                      <Typography variant="caption" style={{ textTransform: "uppercase", letterSpacing: "1px", opacity: 0.9 }}>
-                        Detected Pathogen / Condition
-                      </Typography>
-                      <Typography variant="h4" style={{ fontWeight: 800, marginTop: 2 }}>
-                        {data.diagnosis.predicted_class}
-                      </Typography>
-                      <div className={classes.urduHeader}>
-                        {data.diagnosis.disease_name_urdu}
+                {/* 1. DIAGNOSIS HERO CARD (SPAN 12) */}
+                <div style={{ gridColumn: 'span 12', background: 'linear-gradient(135deg, #152210 0%, #1a2914 100%)', color: '#ffffff', borderRadius: '28px', padding: '2rem 2.25rem', border: '1px solid rgba(74, 222, 128, 0.2)', boxShadow: '0 20px 45px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '2.25rem', flexWrap: 'wrap' }}>
+                  {/* Left: Scanned Crop Image */}
+                  {selectedFile && (
+                    <div style={{ flexShrink: 0 }}>
+                      <div style={{ width: '160px', height: '160px', borderRadius: '20px', overflow: 'hidden', border: '3px solid rgba(255, 255, 255, 0.15)', boxShadow: '0 12px 30px rgba(0,0,0,0.4)' }}>
+                        <img 
+                          src={URL.createObjectURL(selectedFile)} 
+                          alt="Scanned Cotton Leaf" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
                       </div>
-                      <Typography variant="subtitle2" style={{ opacity: 0.95 }}>
-                        📍 Target Region: <strong>{data.region}</strong>
-                      </Typography>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#a7f3d0', fontWeight: 600, marginTop: '8px', textAlign: 'center' }}>
+                        {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Right: Pathogen Details */}
+                  <div style={{ flex: 1, minWidth: '280px', textAlign: 'left' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#4ade80', display: 'block', marginBottom: '6px' }}>
+                      DETECTED PATHOGEN / CONDITION
+                    </span>
+                    
+                    <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '2.75rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px 0', lineHeight: 1.1, letterSpacing: '-0.5px' }}>
+                      {data.diagnosis.predicted_class}
+                    </h2>
+                    
+                    <div style={{ fontFamily: "'Jameel Noori Nastaleeq', 'Jameel Noori Nastaleeq Regular', 'Noto Nastaliq Urdu', serif", fontSize: '1.4rem', fontWeight: 700, color: '#a7f3d0', marginBottom: '16px', lineHeight: 2.0 }}>
+                      {data.diagnosis.disease_name_urdu}
                     </div>
 
-                    <Box display="flex" flexDirection="column" alignItems="flex-end" gridGap={8}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.06)', padding: '6px 14px', borderRadius: '50px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                        📍 Target Region: <strong style={{ color: '#ffffff' }}>{data.region}</strong>
+                      </span>
                       <Chip {...getUrgencyChipProps(data.actionable_decision.urgency_level)} />
-                      <Chip
-                        label={`Confidence: ${data.diagnosis.confidence_percentage}%`}
-                        style={{ background: "rgba(255, 255, 255, 0.2)", color: "#fff", fontWeight: 700 }}
-                      />
-                    </Box>
-                  </Box>
+                      <span style={{ background: 'rgba(52, 211, 153, 0.12)', border: '1px solid #34d399', color: '#34d399', fontSize: '0.8rem', fontWeight: 800, padding: '6px 16px', borderRadius: '50px' }}>
+                        Confidence: {data.diagnosis.confidence_percentage}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* QWEN AI LLM ADVISORY CARD + AUDIO PLAYER */}
+                {/* 2. AI RECOMMENDATION & TREATMENT (SIDE-BY-SIDE) */}
+
+                {/* Left Card: Alibaba Qwen AI (SPAN 5) */}
                 {data.qwen_advisory && (
-                  <div className={classes.qwenAdvisoryCard}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gridGap={10}>
-                      <Typography variant="h6" style={{ fontWeight: 800, color: "#064e3b", display: "flex", alignItems: "center", gap: 8 }}>
-                        <FaBrain style={{ color: "#059669" }} />
-                        Alibaba Qwen AI Recommendation ({data.qwen_advisory.language_native || data.qwen_advisory.language_name || data.qwen_advisory.language})
-                      </Typography>
+                  <div style={{ gridColumn: 'span 5', background: '#f0fdf4', border: '1.5px solid #a7f3d0', borderRadius: '28px', padding: '1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(5,150,105,0.06)' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '1rem' }}>
+                        <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, color: '#064e3b', fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                          <FaBrain style={{ color: '#059669' }} />
+                          Alibaba Qwen AI Recommendation ({data.qwen_advisory.language_native || data.qwen_advisory.language_name || data.qwen_advisory.language})
+                        </h3>
+                      </div>
 
-                      <Box display="flex" alignItems="center" gridGap={10}>
-                        {/* AUDIO PLAYER FOR ILLITERATE FARMERS */}
-                        <Button
-                          variant="contained"
-                          className={classes.audioButton}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+                        <button
+                          type="button"
                           onClick={toggleAudioAdvisory}
-                          startIcon={isPlayingAudio ? <FaVolumeMute /> : <FaVolumeUp />}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#059669',
+                            color: '#ffffff',
+                            fontFamily: "'DM Sans', sans-serif",
+                            fontWeight: 800,
+                            fontSize: '0.8rem',
+                            padding: '7px 16px',
+                            borderRadius: '50px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+                            transition: 'all 0.2s ease',
+                          }}
                         >
-                          {isPlayingAudio ? "Stop Audio" : "🔊 Listen Audio"}
-                        </Button>
+                          {isPlayingAudio ? <FaVolumeMute /> : <FaVolumeUp />}
+                          <span>{isPlayingAudio ? "Stop Audio" : "🔊 Listen Audio"}</span>
+                        </button>
 
-                        <Chip
-                          label={`Urgency: ${data.qwen_advisory.urgency.toUpperCase()}`}
-                          style={{ background: "#059669", color: "#fff", fontWeight: 800 }}
-                          size="small"
-                        />
-                      </Box>
-                    </Box>
+                        <span style={{ background: '#059669', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '4px 12px', borderRadius: '50px', textTransform: 'uppercase' }}>
+                          Urgency: {data.qwen_advisory.urgency}
+                        </span>
+                      </div>
 
-                    <div className={data.qwen_advisory.is_rtl ? classes.qwenRtlText : classes.infoBox} style={{ marginTop: 12 }}>
-                      {data.qwen_advisory.recommendation}
+                      <div 
+                        style={{ 
+                          fontFamily: data.qwen_advisory.is_rtl ? "'Jameel Noori Nastaleeq', 'Jameel Noori Nastaleeq Regular', 'Noto Nastaliq Urdu', serif" : "'DM Sans', sans-serif", 
+                          fontSize: data.qwen_advisory.is_rtl ? '1.15rem' : '0.92rem', 
+                          lineHeight: data.qwen_advisory.is_rtl ? 2.2 : 1.7, 
+                          color: '#1e293b', 
+                          direction: data.qwen_advisory.is_rtl ? 'rtl' : 'ltr',
+                          background: 'rgba(255, 255, 255, 0.85)',
+                          padding: '1.25rem',
+                          borderRadius: '16px',
+                          border: '1px solid #d1fae5'
+                        }}
+                      >
+                        {data.qwen_advisory.recommendation}
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* FINANCIAL YIELD PROTECTION & ROI CALCULATOR */}
-                <div className={classes.financialCard}>
-                  <Typography variant="h6" style={{ fontWeight: 800, color: "#78350f", display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                    <FaCoins style={{ color: "#d97706" }} /> Agronomic Financial Loss & Yield Impact Assessment
-                  </Typography>
+                {/* Right Card: Precise Agronomic Spray Recommendation (SPAN 7) */}
+                <div style={{ gridColumn: 'span 7', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '28px', padding: '1.75rem', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, color: '#064e3b', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 1.25rem 0' }}>
+                      <FaFlask style={{ color: '#059669' }} /> Precise Agronomic Spray Recommendation
+                    </h3>
 
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
-                      <div className={classes.infoBox} style={{ background: "#fff", border: "1px solid #fde68a" }}>
-                        <Typography variant="caption" style={{ fontWeight: 700, color: "#b45309" }}>ESTIMATED DAMAGE IF UNTREATED</Typography>
-                        <Typography variant="h6" style={{ fontWeight: 800, color: "#dc2626", marginTop: 4 }}>35% Yield Loss</Typography>
-                        <Typography variant="caption" style={{ color: "#64748b" }}>~PKR 45,000 ($160) / acre</Typography>
+                    {/* Internal 2-Column Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          FORMULATION & CHEMICAL ({language.toUpperCase()})
+                        </span>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, color: '#064e3b', fontSize: '0.98rem', marginTop: '4px' }}>
+                          {data.actionable_decision.chemical_recommendation}
+                        </div>
                       </div>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <div className={classes.infoBox} style={{ background: "#fff", border: "1px solid #fde68a" }}>
-                        <Typography variant="caption" style={{ fontWeight: 700, color: "#b45309" }}>CHEMICAL REMEDY COST</Typography>
-                        <Typography variant="h6" style={{ fontWeight: 800, color: "#0284c7", marginTop: 4 }}>PKR 1,850 / acre</Typography>
-                        <Typography variant="caption" style={{ color: "#64748b" }}>~$6.50 / acre formulation</Typography>
-                      </div>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <div className={classes.infoBox} style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-                        <Typography variant="caption" style={{ fontWeight: 700, color: "#047857" }}>NET PROTECTED CROP VALUE</Typography>
-                        <Typography variant="h6" style={{ fontWeight: 800, color: "#059669", marginTop: 4 }}>+PKR 43,150 / acre</Typography>
-                        <Typography variant="caption" style={{ color: "#064e3b" }}>Saved ROI: +2,300%</Typography>
-                      </div>
-                    </Grid>
-                  </Grid>
-                </div>
 
-                {/* CHEMICAL REMEDY CARD */}
-                <div className={classes.remedyCard}>
-                  <Typography variant="h5" className={classes.remedyTitle}>
-                    <FaFlask style={{ color: "#059669" }} /> Precise Agronomic Spray Recommendation
-                  </Typography>
-
-                  <div className={classes.infoGrid}>
-                    <div className={classes.infoBox}>
-                      <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
-                        FORMULATION & CHEMICAL (ENGLISH)
-                      </Typography>
-                      <Typography variant="body1" style={{ fontWeight: 700, color: "#064e3b", marginTop: 4 }}>
-                        {data.actionable_decision.chemical_recommendation}
-                      </Typography>
+                      <div style={{ background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          DOSAGE PER ACRE
+                        </span>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, color: '#064e3b', fontSize: '0.98rem', marginTop: '4px' }}>
+                          {data.actionable_decision.dosage_per_acre}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className={classes.infoBox}>
-                      <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
-                        DOSAGE PER ACRE
-                      </Typography>
-                      <Typography variant="body1" style={{ fontWeight: 700, color: "#064e3b", marginTop: 4 }}>
-                        {data.actionable_decision.dosage_per_acre}
-                      </Typography>
+                    {/* Faint Gray Application Method */}
+                    <div style={{ background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: '1rem' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        APPLICATION METHOD & INSTRUCTIONS
+                      </span>
+                      <p style={{ fontFamily: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif" : "'DM Sans', sans-serif", fontSize: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? '1.15rem' : '0.88rem', color: '#1e293b', margin: '4px 0 0 0', lineHeight: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? 2.2 : 1.5, direction: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? 'rtl' : 'ltr' }}>
+                        {data.actionable_decision.application_instructions}
+                      </p>
+                    </div>
+
+                    {/* Field Context */}
+                    <div style={{ background: '#f0fdf4', padding: '1rem 1.25rem', borderRadius: '16px', border: '1px solid #bbf7d0' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        AGRICULTURAL FIELD CONTEXT (SINDH)
+                      </span>
+                      <p style={{ fontFamily: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif" : "'DM Sans', sans-serif", fontSize: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? '1.15rem' : '0.85rem', color: '#064e3b', margin: '4px 0 0 0', lineHeight: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? 2.2 : 1.5, direction: (language === 'ur' || language === 'sd' || language === 'ps' || data.qwen_advisory?.is_rtl) ? 'rtl' : 'ltr' }}>
+                        {data.actionable_decision.agronomic_context_sindh}
+                      </p>
                     </div>
                   </div>
-
-                  <Box mt={2} className={classes.infoBox}>
-                    <Typography variant="caption" style={{ fontWeight: 700, color: "#64748b" }}>
-                      APPLICATION METHOD & INSTRUCTIONS
-                    </Typography>
-                    <Typography variant="body1" style={{ color: "#1e293b", marginTop: 4 }}>
-                      {data.actionable_decision.application_instructions}
-                    </Typography>
-                  </Box>
-
-                  <Box mt={2} className={classes.infoBox} style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-                    <Typography variant="caption" style={{ fontWeight: 700, color: "#047857" }}>
-                      AGRICULTURAL FIELD CONTEXT (SINDH)
-                    </Typography>
-                    <Typography variant="body2" style={{ color: "#064e3b", marginTop: 4 }}>
-                      {data.actionable_decision.agronomic_context_sindh}
-                    </Typography>
-                  </Box>
                 </div>
 
-                {/* LIVE WEATHER SAFETY WIDGET */}
+                {/* 3. WEATHER SAFETY BANNER (SPAN 12) */}
                 {weatherInfo && (
-                  <div className={`${classes.weatherCard} ${weatherInfo.can_spray ? classes.weatherSafe : classes.weatherPostponed}`}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gridGap={12} mb={2}>
-                      <Typography variant="h6" style={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}>
-                        <FaCloudSun style={{ color: weatherInfo.can_spray ? "#059669" : "#ea580c" }} />
-                        Real-Time Weather Safety ({weatherInfo.conditions_assessed.temperature_c}°C, {weatherInfo.conditions_assessed.wind_speed_kmh} km/h wind)
-                      </Typography>
+                  <div 
+                    style={{ 
+                      gridColumn: 'span 12', 
+                      background: weatherInfo.can_spray ? '#f0fdf4' : '#fef2f2', 
+                      border: weatherInfo.can_spray ? '1.5px solid #a7f3d0' : '1.5px solid #fecaca', 
+                      borderRadius: '24px', 
+                      padding: '1.25rem 1.75rem',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FaCloudSun style={{ color: weatherInfo.can_spray ? '#059669' : '#dc2626', fontSize: '1.4rem' }} />
+                        <h4 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, color: weatherInfo.can_spray ? '#064e3b' : '#991b1b', fontSize: '1.1rem', margin: 0 }}>
+                          Real-Time Weather Safety ({weatherInfo.conditions_assessed.temperature_c}°C, {weatherInfo.conditions_assessed.wind_speed_kmh} km/h wind)
+                        </h4>
+                      </div>
 
-                      <Chip
-                        icon={weatherInfo.can_spray ? <FaCheckCircle /> : <FaTimesCircle />}
-                        label={weatherInfo.can_spray ? "✅ SAFE TO SPRAY" : "⛔ SPRAYING POSTPONED"}
-                        style={{
-                          background: weatherInfo.can_spray ? "#059669" : "#dc2626",
-                          color: "#fff",
-                          fontWeight: 800,
+                      <span 
+                        style={{ 
+                          background: weatherInfo.can_spray ? '#059669' : '#dc2626', 
+                          color: '#ffffff', 
+                          fontWeight: 800, 
+                          fontSize: '0.8rem', 
+                          padding: '6px 16px', 
+                          borderRadius: '50px', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '6px' 
                         }}
-                      />
-                    </Box>
+                      >
+                        {weatherInfo.can_spray ? <FaCheckCircle /> : <FaTimesCircle />}
+                        <span>{weatherInfo.can_spray ? "✅ SAFE TO SPRAY" : "⛔ SPRAYING POSTPONED"}</span>
+                      </span>
+                    </div>
 
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={4}>
-                        <div className={classes.weatherMetric}>
-                          <FaCloudSun style={{ color: "#eab308" }} />
-                          <span>Temp: {weatherInfo.conditions_assessed.temperature_c}°C</span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <div className={classes.weatherMetric}>
-                          <FaWind style={{ color: "#0284c7" }} />
-                          <span>Wind: {weatherInfo.conditions_assessed.wind_speed_kmh} km/h</span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <div className={classes.weatherMetric}>
-                          <FaTint style={{ color: "#2563eb" }} />
-                          <span>Humidity: {weatherInfo.conditions_assessed.humidity_pct}%</span>
-                        </div>
-                      </Grid>
-                    </Grid>
+                    {/* Horizontal Weather Metrics */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', background: '#ffffff', padding: '10px 18px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.06)', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 700, color: '#334155' }}>
+                        <FaCloudSun style={{ color: '#eab308' }} /> <span>Temp: {weatherInfo.conditions_assessed.temperature_c}°C</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 700, color: '#334155' }}>
+                        <FaWind style={{ color: '#0284c7' }} /> <span>Wind: {weatherInfo.conditions_assessed.wind_speed_kmh} km/h</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 700, color: '#334155' }}>
+                        <FaTint style={{ color: '#2563eb' }} /> <span>Humidity: {weatherInfo.conditions_assessed.humidity_pct}%</span>
+                      </div>
+                    </div>
 
-                    <Box mt={2} display="flex" alignItems="center" gridGap={8}>
-                      <FaClock style={{ color: "#475569" }} />
-                      <Typography variant="body2" style={{ fontWeight: 700, color: "#334155" }}>
-                        Recommended Time Window: {weatherInfo.recommended_window}
-                      </Typography>
-                    </Box>
+                    {/* Recommended Window & Warning Line */}
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <FaClock style={{ color: '#64748b' }} />
+                      <span>Recommended Time Window: <strong>{weatherInfo.recommended_window}</strong></span>
+                    </div>
 
                     {weatherInfo.weather_warnings && weatherInfo.weather_warnings.length > 0 && (
-                      <Box mt={2} p={1.5} borderRadius={8} style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid #fca5a5" }}>
+                      <div style={{ marginTop: '10px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #fca5a5', borderRadius: '12px', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 800, color: '#991b1b' }}>
                         {weatherInfo.weather_warnings.map((warn, idx) => (
-                          <Typography key={idx} variant="body2" style={{ color: "#991b1b", fontWeight: 700 }}>
-                            ⚠️ {warn}
-                          </Typography>
+                          <div key={idx}>⚠️ {warn}</div>
                         ))}
-                      </Box>
+                      </div>
                     )}
                   </div>
                 )}
+
+                {/* 4. ACTION TOOLBAR (SPAN 12) */}
+                <div style={{ gridColumn: 'span 12', marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', background: '#ffffff', borderRadius: '50px', padding: '12px 24px', border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0,0,0,0.06)' }}>
+                  <button
+                    type="button"
+                    onClick={handleDownloadPDFReport}
+                    style={{
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      color: '#334155',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      padding: '10px 22px',
+                      borderRadius: '50px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, background 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    📄 Print / Download Official Field Spray Report
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={saveToMongoDB}
+                    disabled={isSaving}
+                    style={{
+                      background: '#f0fdf4',
+                      border: '1.5px solid #059669',
+                      color: '#059669',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      padding: '10px 22px',
+                      borderRadius: '50px',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'transform 0.2s ease, background 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => !isSaving && (e.currentTarget.style.transform = 'scale(1.04)')}
+                    onMouseLeave={(e) => !isSaving && (e.currentTarget.style.transform = 'scale(1)')}
+                  >
+                    <FaBookmark />
+                    <span>{isSaving ? "Saving..." : "Save Diagnosis to My Saved Plants"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={clearData}
+                    style={{
+                      background: '#059669',
+                      color: '#ffffff',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      padding: '12px 26px',
+                      borderRadius: '50px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 6px 18px rgba(5, 150, 105, 0.3)',
+                      transition: 'transform 0.2s ease, background 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <FaRedo />
+                    <span>Upload Another Cotton Leaf Photo</span>
+                  </button>
+                </div>
               </>
             )}
-
-            {/* ACTION BUTTONS */}
-            <Box textAlign="center" mt={4} display="flex" justifyContent="center" gridGap={16} flexWrap="wrap">
-              <Button
-                variant="contained"
-                style={{ background: "#059669", color: "#fff", fontWeight: 700, borderRadius: 30, padding: "12px 26px" }}
-                onClick={handleDownloadPDFReport}
-              >
-                📄 Print / Download Official Field Spray Report
-              </Button>
-
-              <Button
-                variant="contained"
-                className={classes.saveButton}
-                onClick={saveToMongoDB}
-                disabled={isSaving}
-                startIcon={<FaBookmark />}
-              >
-                {isSaving ? "Saving..." : "Save Diagnosis to My Saved Plants"}
-              </Button>
-
-              <Button
-                variant="contained"
-                className={classes.actionButton}
-                onClick={clearData}
-                startIcon={<FaRedo />}
-              >
-                Upload Another Cotton Leaf Photo
-              </Button>
-            </Box>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* FLOATING FAB CHAT BUTTON */}
       <Fab
@@ -1233,6 +1416,109 @@ export const ImageUpload = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+
+      {/* COMPLETE PROFILE MODAL */}
+      <Dialog 
+        open={showProfileModal} 
+        onClose={() => setShowProfileModal(false)}
+        PaperProps={{
+          style: {
+            borderRadius: '24px',
+            padding: '1rem',
+            maxWidth: '480px',
+            width: '100%'
+          }
+        }}
+      >
+        <DialogTitle style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, color: '#064e3b', fontSize: '1.35rem', paddingBottom: '0.5rem' }}>
+          🌾 Complete Your Farmer Profile
+        </DialogTitle>
+        <DialogContent style={{ paddingTop: '0.5rem' }}>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.88rem', color: '#64748b', marginBottom: '1.25rem' }}>
+            Add your farm details to activate real-time WhatsApp advisory & automated spray alerts.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
+                WhatsApp Number
+              </label>
+              <input
+                type="text"
+                value={profileFormData.whatsappNumber}
+                onChange={(e) => setProfileFormData({ ...profileFormData, whatsappNumber: e.target.value })}
+                placeholder="e.g. +92 300 1234567"
+                style={{ width: '100%', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '10px 14px', fontSize: '0.9rem', color: '#1e293b', outline: 'none' }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
+                  Main Crop
+                </label>
+                <select
+                  value={profileFormData.mainCrop}
+                  onChange={(e) => setProfileFormData({ ...profileFormData, mainCrop: e.target.value })}
+                  style={{ width: '100%', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '10px 14px', fontSize: '0.9rem', color: '#1e293b', outline: 'none', cursor: 'pointer' }}
+                >
+                  <option value="Cotton">🌱 Cotton</option>
+                  <option value="Potato">🥔 Potato</option>
+                  <option value="Tomato">🍅 Tomato</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
+                  District / City
+                </label>
+                <input
+                  type="text"
+                  value={profileFormData.city}
+                  onChange={(e) => setProfileFormData({ ...profileFormData, city: e.target.value })}
+                  placeholder="e.g. Khairpur"
+                  style={{ width: '100%', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '10px 14px', fontSize: '0.9rem', color: '#1e293b', outline: 'none' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
+                Land Size (Acres)
+              </label>
+              <input
+                type="text"
+                value={profileFormData.landSize}
+                onChange={(e) => setProfileFormData({ ...profileFormData, landSize: e.target.value })}
+                placeholder="e.g. 10 Acres"
+                style={{ width: '100%', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '10px 14px', fontSize: '0.9rem', color: '#1e293b', outline: 'none' }}
+              />
+            </div>
+          </div>
+        </DialogContent>
+
+        <DialogActions style={{ padding: '1rem 1.5rem 1.25rem 1.5rem', justifyContent: 'space-between' }}>
+          <button
+            type="button"
+            onClick={() => setShowProfileModal(false)}
+            style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '50px', padding: '8px 18px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsProfileComplete(true);
+              localStorage.setItem('plantwise_user_profile', JSON.stringify({ ...profileFormData, isProfileComplete: true }));
+              setShowProfileModal(false);
+              notify.success("Farmer Profile Completed & WhatsApp Alerts Enabled!");
+            }}
+            style={{ background: '#059669', color: '#ffffff', border: 'none', borderRadius: '50px', padding: '10px 22px', fontWeight: 800, fontSize: '0.88rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(5,150,105,0.25)' }}
+          >
+            Save Profile & Enable Alerts
+          </button>
+        </DialogActions>
+      </Dialog>
+    </div>
   );
 };
