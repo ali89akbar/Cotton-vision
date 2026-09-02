@@ -13,6 +13,8 @@ import {
 import { makeStyles } from '@material-ui/core/styles';
 import { Facebook } from '@material-ui/icons';
 
+import axios from "axios";
+
 const useStyles = makeStyles((theme) => ({
   plantCard: {
     marginBottom: theme.spacing(3),
@@ -82,6 +84,21 @@ const BadgeProgressPage = () => {
   const classes = useStyles();
   const [plantProgress, setPlantProgress] = useState([]);
   const [badges, setBadges] = useState([]);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get('http://localhost:6005/login/sucess', { withCredentials: true })
+      .then(res => {
+        if (res.data && res.data.user) {
+          setUser(res.data.user);
+        }
+        setAuthLoading(false);
+      })
+      .catch(() => {
+        setAuthLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     window.fbAsyncInit = function () {
@@ -160,8 +177,33 @@ const BadgeProgressPage = () => {
     }
   };
 
+  if (!user && !authLoading) {
+    return (
+      <div style={{ paddingTop: '7.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', background: 'linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)' }}>
+        <Card style={{ padding: 40, textAlign: 'center', borderRadius: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: 500, background: '#ffffff', margin: '0 1rem' }}>
+          <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, borderRadius: '50%', background: '#e6f4ea', color: '#059669', fontSize: 32, marginBottom: 16 }}>
+            🏅
+          </div>
+          <Typography variant="h5" style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+            🔒 Registered Farmer Access Only
+          </Typography>
+          <Typography variant="body1" style={{ marginTop: 10, color: '#475569', lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
+            Please log in with your account to track your plant care achievements, view unlocked badges, and share progress.
+          </Typography>
+          <Button
+            variant="contained"
+            style={{ marginTop: 24, background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', fontWeight: 700, borderRadius: 30, padding: '12px 30px', fontFamily: "'DM Sans', sans-serif" }}
+            onClick={() => window.location.href = '/login'}
+          >
+            🔑 LOGIN TO ACCESS BADGES
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <Container style={{ marginTop: "50px" }}>
+    <Container style={{ paddingTop: "7.5rem", paddingBottom: "3rem" }}>
       <Typography variant="h4" className={classes.mainTitle}>
         🌿 Your Plant Care Progress
       </Typography>

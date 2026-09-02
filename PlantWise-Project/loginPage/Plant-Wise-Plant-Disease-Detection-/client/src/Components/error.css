@@ -10,11 +10,11 @@
   min-height: 100vh;
   background: linear-gradient(160deg, #f8fafc 0%, #f0fdf4 50%, #ecfdf5 100%);
   padding: 2rem;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .error-heading {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Bricolage Grotesque', sans-serif;
   color: #dc2626;
   font-size: 2rem;
   font-weight: 800;
@@ -26,7 +26,7 @@
   padding: 0.75rem 1.75rem;
   font-size: 0.95rem;
   font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: white;
   border: none;

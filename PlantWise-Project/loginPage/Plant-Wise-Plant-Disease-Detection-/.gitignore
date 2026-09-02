@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Agent Skills & Internal Tooling
+.agents/
+.gemini/
+.vscode/
+.idea/
+skills-lock.json
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build and Temp outputs
+build/
+dist/
+.DS_Store
+Thumbs.db

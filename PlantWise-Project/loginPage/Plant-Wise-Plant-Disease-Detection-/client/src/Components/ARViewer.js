@@ -1,15 +1,31 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import axios from "axios";
 import "./ar-viewer.css";
 
 const ARViewer = () => {
   const sceneRef = useRef(null);
-  const [arLoaded, setArLoaded] = React.useState(false);
-  const [arError, setArError] = React.useState(null);
+  const [arLoaded, setArLoaded] = useState(false);
+  const [arError, setArError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const modelUrl = queryParams.get("model");
+
+  useEffect(() => {
+    axios.get('http://localhost:6005/login/sucess', { withCredentials: true })
+      .then(res => {
+        if (res.data && res.data.user) {
+          setUser(res.data.user);
+        }
+        setAuthLoading(false);
+      })
+      .catch(() => {
+        setAuthLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     if (window.AFRAME && window.ARjs) {
@@ -34,10 +50,33 @@ const ARViewer = () => {
     };
   }, [arLoaded]);
 
+  if (!user && !authLoading) {
+    return (
+      <div style={{ paddingTop: '7.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', background: 'linear-gradient(180deg, #f0fdf4 0%, #e2e8f0 100%)' }}>
+        <div style={{ padding: 40, textAlign: 'center', borderRadius: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: 500, background: '#ffffff', margin: '0 1rem' }}>
+          <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, borderRadius: '50%', background: '#e6f4ea', color: '#059669', fontSize: 32, marginBottom: 16 }}>
+            📷
+          </div>
+          <h2 style={{ fontWeight: 800, color: '#064e3b', fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.5rem', marginBottom: 10 }}>
+            🔒 Registered Farmer Access Only
+          </h2>
+          <p style={{ marginTop: 10, color: '#475569', lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif", fontSize: '0.95rem' }}>
+            Please log in with your account to access 3D AR Camera viewing.
+          </p>
+          <button
+            style={{ marginTop: 24, background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', fontWeight: 700, borderRadius: 30, padding: '12px 30px', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+            onClick={() => window.location.href = '/login'}
+          >
+            🔑 LOGIN TO ACCESS AR VIEWER
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (arError) {
     return (
       <div className="ar-container">
-        {/* error UI */}
         <p>{arError}</p>
       </div>
     );
