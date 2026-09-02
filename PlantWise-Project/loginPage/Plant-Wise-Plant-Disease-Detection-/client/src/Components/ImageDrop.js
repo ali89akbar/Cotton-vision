@@ -579,19 +579,26 @@ export const ImageUpload = () => {
     setChatLoading(true);
 
     try {
-      const response = await axiosInstance.post("/qwen-chat", {
+      const response = await axios.post("http://localhost:8000/qwen-chat", {
         message: userText,
         disease: data?.diagnosis?.predicted_class || "",
         language: language,
-      });
+      }, { timeout: 25000 });
 
       const reply = response.data?.reply || "Follow recommended agronomic guidelines.";
       setChatMessages((prev) => [...prev, { sender: "qwen", text: reply }]);
     } catch (error) {
       console.error("Chat error:", error);
+      const dis = data?.diagnosis?.predicted_class || "Cotton Crop";
+      let dynamicFallback = `For ${dis} management: Apply chemical remedies separately during cool morning hours (6:00 - 9:00 AM) or late evening. Always verify dosage on chemical labels.`;
+      if (language === "ur") {
+        dynamicFallback = `${dis} کے لیے: ہمیشہ صبح کے ٹھنڈے اوقات (6 سے 9 بجے) یا شام میں اسپرے کریں۔ دوائی کی خوراک ایگرو ڈیلر کی ہدایت کے مطابق استعمال کریں۔`;
+      } else if (language === "sd") {
+        dynamicFallback = `${dis} جي علاج لاءِ: هميشه صبح جو يا شام جي وقت اسپري ڪريو. دوائن جو مقدار دروست استعمال ڪريو.`;
+      }
       setChatMessages((prev) => [
         ...prev,
-        { sender: "qwen", text: "Keep crop leaves dry and apply recommended chemical remedies strictly in evening." }
+        { sender: "qwen", text: dynamicFallback }
       ]);
     } finally {
       setChatLoading(false);
@@ -1371,7 +1378,7 @@ export const ImageUpload = () => {
         onClose={() => setChatOpen(false)}
         classes={{ paper: classes.chatDrawerPaper }}
       >
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
           <Typography variant="h6" style={{ fontWeight: 800, color: "#064e3b", display: "flex", alignItems: "center", gap: 8 }}>
             <FaBrain style={{ color: "#059669" }} /> Qwen AI Agronomist Copilot
           </Typography>
@@ -1380,9 +1387,29 @@ export const ImageUpload = () => {
           </IconButton>
         </Box>
 
-        <Typography variant="caption" style={{ color: "#64748b", marginBottom: 12, display: "block" }}>
-          Powered by Alibaba Cloud DashScope Qwen-Plus LLM
+        <Typography variant="caption" style={{ color: "#64748b", marginBottom: 8, display: "block" }}>
+          Powered by Alibaba Cloud Qwen & Google Gemini Multi-LLM AI
         </Typography>
+
+        {/* QUICK SUGGESTION PROMPTS */}
+        <Box display="flex" flexWrap="wrap" gridGap={6} mb={1.5}>
+          {[
+            "Can I mix fertilizer with Copper Oxychloride?",
+            "When is the safest spray time today?",
+            "What is the dosage per acre?",
+          ].map((promptText, i) => (
+            <Chip
+              key={i}
+              label={promptText}
+              size="small"
+              clickable
+              onClick={() => {
+                setInputMessage(promptText);
+              }}
+              style={{ background: "#e6f4ea", color: "#059669", fontWeight: 700, fontSize: "0.72rem" }}
+            />
+          ))}
+        </Box>
 
         <div className={classes.chatBox}>
           {chatMessages.map((msg, idx) => (
@@ -1392,12 +1419,12 @@ export const ImageUpload = () => {
           ))}
           {chatLoading && (
             <div className={classes.qwenBubble} style={{ fontStyle: "italic", opacity: 0.8 }}>
-              Alibaba Qwen is thinking...
+              🤖 Qwen AI Copilot is thinking...
             </div>
           )}
         </div>
 
-        <Box display="flex" gridGap={8}>
+        <Box display="flex" gridGap={8} mt={1}>
           <TextField
             fullWidth
             variant="outlined"
