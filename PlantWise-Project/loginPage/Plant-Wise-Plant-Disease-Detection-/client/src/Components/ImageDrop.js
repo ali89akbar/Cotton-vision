@@ -42,6 +42,7 @@ import {
   FaPaperPlane,
   FaTimes,
   FaTrophy,
+  FaCamera,
 } from "react-icons/fa";
 import axios from "axios";
 
@@ -983,7 +984,7 @@ export const ImageUpload = () => {
               </p>
 
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#059669', color: '#ffffff', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '0.88rem', padding: '10px 24px', borderRadius: '50px', boxShadow: '0 8px 20px rgba(5, 150, 105, 0.25)', transition: 'all 0.2s ease' }}>
-                📸 Browse Files
+                <FaCamera style={{ fontSize: '1.05rem' }} /> Browse Files
               </span>
             </div>
           </div>
@@ -1006,17 +1007,45 @@ export const ImageUpload = () => {
             
             {/* LOW CONFIDENCE ALERT */}
             {data.status === "LOW_CONFIDENCE" && (
-              <div style={{ gridColumn: 'span 12', background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '24px', padding: '1.5rem', color: '#991b1b' }}>
-                <Box display="flex" alignItems="center" gridGap={10} mb={1}>
-                  <FaExclamationTriangle style={{ fontSize: "1.5rem", color: "#dc2626" }} />
-                  <Typography variant="h6" style={{ fontWeight: 800 }}>
+              <div style={{ gridColumn: 'span 12', background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '24px', padding: '1.75rem', color: '#991b1b', textAlign: 'center' }}>
+                <Box display="flex" alignItems="center" justifyContent="center" gridGap={10} mb={1}>
+                  <FaExclamationTriangle style={{ fontSize: "1.75rem", color: "#dc2626" }} />
+                  <Typography variant="h6" style={{ fontWeight: 800, fontFamily: "'Bricolage Grotesque', sans-serif", color: "#991b1b" }}>
                     Low Confidence Safeguard Activated ({(data.confidence * 100).toFixed(1)}%)
                   </Typography>
                 </Box>
-                <Typography variant="subtitle2" style={{ fontWeight: 700, color: "#7f1d1d", mb: 1 }}>
-                  Location Assessed: {data.region}
+                <Typography variant="subtitle2" style={{ fontWeight: 700, color: "#7f1d1d", marginBottom: '6px' }}>
+                  Location Assessed: {data.region || cityName}
                 </Typography>
-                <Typography variant="body1">{data.action_required}</Typography>
+                <Typography variant="body1" style={{ maxWidth: '650px', margin: '0 auto 1.25rem auto', lineHeight: 1.6 }}>
+                  {data.action_required || `Prediction confidence (${(data.confidence * 100).toFixed(1)}%) is below safety threshold (70%). Please capture a clearer, well-lit photograph directly facing the affected leaf surface to avoid improper chemical application.`}
+                </Typography>
+
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '1rem' }}>
+                  <button
+                    onClick={clearData}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: '#dc2626',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '12px 28px',
+                      borderRadius: '50px',
+                      fontWeight: 800,
+                      fontSize: '0.92rem',
+                      cursor: 'pointer',
+                      fontFamily: "'DM Sans', sans-serif",
+                      boxShadow: '0 8px 20px rgba(220, 38, 38, 0.25)',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#b91c1c')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#dc2626')}
+                  >
+                    <FaCamera /> Upload Another Photo / Retake Scan
+                  </button>
+                </div>
               </div>
             )}
 
