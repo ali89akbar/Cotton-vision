@@ -46,7 +46,7 @@ const Headers = () => {
                 <ul className={menuOpen ? 'nav-links open' : 'nav-links'}>
                     <li><NavLink to="/" onClick={() => setMenuOpen(false)}>Home</NavLink></li>
                     <li><NavLink to="/dashboard" className="model-pill" onClick={() => setMenuOpen(false)}>AI Disease Scanner</NavLink></li>
-                    <li><NavLink to="/outbreak-radar" onClick={() => setMenuOpen(false)}>🗺️ Outbreak Radar</NavLink></li>
+                    <li><NavLink to="/outbreak-radar" onClick={() => setMenuOpen(false)}>Outbreak Radar</NavLink></li>
 
                     {Object.keys(userdata).length > 0 ? (
                         <>
