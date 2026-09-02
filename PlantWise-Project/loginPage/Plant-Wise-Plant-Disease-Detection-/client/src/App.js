@@ -14,6 +14,7 @@ import SocialMedia from './Components/SocialMedia';
 import BadgeProgressPage from './Components/BadgeProgressPage';
 import ARViewer from './Components/ARViewer';
 import PlantGallery from './Components/PlantGallery';
+import Footer from './Components/Footer';
 import { NotificationProvider } from './Components/NotificationContext';
 
 const LenisSmoothScroll = () => {
@@ -65,6 +66,7 @@ function App() {
                 <Route path='/ar-viewer' element={<ARViewer />}/>
                 <Route path="*" element={<Error />} />
             </Routes>
+            <Footer />
         </NotificationProvider>
     );
 }
