@@ -208,15 +208,19 @@ const OutbreakRadar = () => {
     setWeatherLoading(true);
 
     const fetchWeather = async () => {
-      const apiKey = process.env.REACT_APP_OPENWEATHER_API_KEY || "b6907d289e10d714a6e88b30761fae22";
+      const apiKey = process.env.REACT_APP_OPENWEATHER_API_KEY || "2c68cac827dd9e327fdd97b4e39326ed";
 
       try {
         const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${activeCity.lat}&lon=${activeCity.lng}&appid=${apiKey}&units=metric`;
         const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${activeCity.lat}&lon=${activeCity.lng}&appid=${apiKey}&units=metric`;
 
+        // Third-party weather APIs respond with `Access-Control-Allow-Origin: *`,
+        // which the browser rejects when requests are sent with credentials
+        // (a global `axios.defaults.withCredentials = true` is set in SocialMedia.js).
+        // Force `withCredentials: false` per-request so the CORS check passes.
         const [weatherRes, forecastRes] = await Promise.all([
-          axios.get(weatherUrl),
-          axios.get(forecastUrl).catch(() => ({ data: null })),
+          axios.get(weatherUrl, { withCredentials: false }),
+          axios.get(forecastUrl, { withCredentials: false }).catch(() => ({ data: null })),
         ]);
 
         if (isMounted && weatherRes.data && weatherRes.data.main) {
@@ -257,7 +261,7 @@ const OutbreakRadar = () => {
         // Fallback to Open-Meteo Satellite Feed
         try {
           const meteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${activeCity.lat}&longitude=${activeCity.lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,wind_speed_10m,wind_direction_10m,uv_index&hourly=precipitation_probability&timezone=auto`;
-          const meteoRes = await axios.get(meteoUrl);
+          const meteoRes = await axios.get(meteoUrl, { withCredentials: false });
           
           if (isMounted && meteoRes.data && meteoRes.data.current) {
             const curr = meteoRes.data.current;
