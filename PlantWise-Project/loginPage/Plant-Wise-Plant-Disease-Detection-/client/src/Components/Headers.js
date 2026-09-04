@@ -3,19 +3,21 @@ import './header.css';
 import { NavLink } from 'react-router-dom';
 import axios from 'axios';
 import { FaLeaf, FaBars, FaTimes } from 'react-icons/fa';
-import { FiSearch, FiBell, FiGrid, FiUser } from 'react-icons/fi';
+import { FiSearch, FiBell, FiGrid, FiUser, FiLogOut, FiSettings } from 'react-icons/fi';
 
 const Headers = () => {
     const [userdata, setUserdata] = useState({});
     const [imgError, setImgError] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     // Profile state for conditional notifications
     const [userProfile, setUserProfile] = useState(null);
     const [readNotifIds, setReadNotifIds] = useState([]);
 
     const notifRef = useRef(null);
+    const userMenuRef = useRef(null);
 
     const getUser = async () => {
         try {
@@ -50,15 +52,18 @@ const Headers = () => {
         return () => window.removeEventListener('storage', loadProfile);
     }, []);
 
-    // Requirement 1: Click Outside to Close Logic (useRef + mousedown listener)
+    // Click Outside to Close Notif & User Menu Popovers
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (notifRef.current && !notifRef.current.contains(event.target)) {
                 setNotifOpen(false);
             }
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+                setUserMenuOpen(false);
+            }
         };
 
-        if (notifOpen) {
+        if (notifOpen || userMenuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         } else {
             document.removeEventListener('mousedown', handleClickOutside);
@@ -67,12 +72,11 @@ const Headers = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [notifOpen]);
+    }, [notifOpen, userMenuOpen]);
 
     const isProfileComplete = !!(userProfile && userProfile.isProfileComplete);
     const userCity = (userProfile && userProfile.city) ? userProfile.city : 'Khairpur';
 
-    // Requirement 2: Conditional Notifications (Never show weather warning to unregistered profile)
     const baseNotifications = isProfileComplete
         ? [
             {
@@ -202,23 +206,143 @@ const Headers = () => {
 
                     <button className="icon-btn accent-icon" title="Quick Tools"><FiGrid /></button>
 
+                    {/* USER PROFILE AVATAR WITH CLICKABLE DROPDOWN MENU */}
                     {Object.keys(userdata).length > 0 ? (
-                        <div className="user-profile-wrapper">
-                            {userdata?.image && !imgError ? (
-                                <img 
-                                    src={userdata.image} 
-                                    className="user-avatar-btn" 
-                                    alt={userdata.displayName || "User Profile"} 
-                                    referrerPolicy="no-referrer"
-                                    onError={() => setImgError(true)}
-                                    title={userdata.displayName || "User Profile"}
-                                />
-                            ) : (
-                                <div className="user-avatar-fallback" title={userdata.displayName || "User Profile"}>
-                                    <FiUser />
+                        <div ref={userMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+                            <div
+                                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                title={userdata.displayName || "Manage Profile"}
+                            >
+                                {userdata?.image && !imgError ? (
+                                    <img 
+                                        src={userdata.image} 
+                                        className="user-avatar-btn" 
+                                        alt={userdata.displayName || "User Profile"} 
+                                        referrerPolicy="no-referrer"
+                                        onError={() => setImgError(true)}
+                                        style={{ border: '2px solid #059669', transition: 'all 0.2s ease' }}
+                                    />
+                                ) : (
+                                    <div className="user-avatar-fallback">
+                                        <FiUser />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* DROPDOWN MENU */}
+                            {userMenuOpen && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 12px)',
+                                        right: 0,
+                                        width: '240px',
+                                        background: '#ffffff',
+                                        borderRadius: '20px',
+                                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.12)',
+                                        border: '1px solid #e2e8f0',
+                                        padding: '12px',
+                                        zIndex: 1000,
+                                    }}
+                                >
+                                    {/* User Info Header */}
+                                    <div style={{ padding: '8px 12px 12px 12px', borderBottom: '1px solid #f1f5f9', marginBottom: '8px' }}>
+                                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {userdata.displayName || 'Registered Farmer'}
+                                        </div>
+                                        <div style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {userdata.email || 'Verified Account'}
+                                        </div>
+                                    </div>
+
+                                    {/* Menu Items */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <NavLink
+                                            to="/complete-profile"
+                                            onClick={() => setUserMenuOpen(false)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                padding: '10px 12px',
+                                                borderRadius: '12px',
+                                                color: '#1e293b',
+                                                textDecoration: 'none',
+                                                fontSize: '0.88rem',
+                                                fontWeight: 700,
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = '#f0fdf4';
+                                                e.currentTarget.style.color = '#059669';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'transparent';
+                                                e.currentTarget.style.color = '#1e293b';
+                                            }}
+                                        >
+                                            <FiSettings style={{ color: '#059669', fontSize: '1.1rem' }} />
+                                            <span>Manage Profile</span>
+                                        </NavLink>
+
+                                        <NavLink
+                                            to="/saved-plants"
+                                            onClick={() => setUserMenuOpen(false)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                padding: '10px 12px',
+                                                borderRadius: '12px',
+                                                color: '#1e293b',
+                                                textDecoration: 'none',
+                                                fontSize: '0.88rem',
+                                                fontWeight: 700,
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = '#f0fdf4';
+                                                e.currentTarget.style.color = '#059669';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'transparent';
+                                                e.currentTarget.style.color = '#1e293b';
+                                            }}
+                                        >
+                                            <FaLeaf style={{ color: '#059669', fontSize: '1rem' }} />
+                                            <span>Saved Plants</span>
+                                        </NavLink>
+
+                                        <div style={{ height: '1px', background: '#f1f5f9', margin: '4px 0' }}></div>
+
+                                        <button
+                                            onClick={logout}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                padding: '10px 12px',
+                                                borderRadius: '12px',
+                                                color: '#dc2626',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                width: '100%',
+                                                textAlign: 'left',
+                                                fontSize: '0.88rem',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                        >
+                                            <FiLogOut style={{ fontSize: '1.1rem' }} />
+                                            <span>Logout</span>
+                                        </button>
+                                    </div>
                                 </div>
                             )}
-                            <button onClick={logout} className="action-btn logout-btn">Logout</button>
                         </div>
                     ) : (
                         <NavLink to="/login" className="action-btn cta-btn">Login / Sign Up</NavLink>

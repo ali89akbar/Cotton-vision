@@ -738,10 +738,17 @@ app.get("/login/sucess", async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       user: {
+        _id: req.user._id,
         displayName: req.user.displayName,
         email: req.user.email,
         image: req.user.image,
         googleId: req.user.googleId,
+        fullName: req.user.fullName || req.user.displayName,
+        whatsappNumber: req.user.whatsappNumber || "",
+        city: req.user.city || "Khairpur",
+        landSize: req.user.landSize || "",
+        crops: req.user.crops || ["Cotton"],
+        isProfileComplete: req.user.isProfileComplete || false,
         badges: req.user.badges,
         badgeProgress: req.user.badgeProgress,
         predictions: req.user.predictions
@@ -750,6 +757,199 @@ app.get("/login/sucess", async (req, res) => {
   } else {
     res.status(401).json({ message: "User not authenticated" });
   }
+});
+
+// GET User Profile
+app.get("/api/user/profile", isAuthenticated, async (req, res) => {
+  try {
+    const user = await userdb.findById(req.user._id || req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        displayName: user.displayName,
+        email: user.email,
+        image: user.image,
+        fullName: user.fullName || user.displayName,
+        whatsappNumber: user.whatsappNumber || "",
+        city: user.city || "Khairpur",
+        landSize: user.landSize || "",
+        crops: user.crops || ["Cotton"],
+        isProfileComplete: user.isProfileComplete || false
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Error fetching user profile", error: error.message });
+  }
+});
+
+// PUT / UPDATE User Profile
+app.put("/api/user/profile", isAuthenticated, async (req, res) => {
+  try {
+    const { fullName, whatsappNumber, city, landSize, crops } = req.body;
+    const user = await userdb.findById(req.user._id || req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (fullName) user.fullName = fullName;
+    if (whatsappNumber) user.whatsappNumber = whatsappNumber;
+    if (city) user.city = city;
+    if (landSize !== undefined) user.landSize = landSize;
+    if (crops && Array.isArray(crops)) user.crops = crops;
+    user.isProfileComplete = true;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        _id: user._id,
+        displayName: user.displayName,
+        email: user.email,
+        image: user.image,
+        fullName: user.fullName,
+        whatsappNumber: user.whatsappNumber,
+        city: user.city,
+        landSize: user.landSize,
+        crops: user.crops,
+        isProfileComplete: user.isProfileComplete
+      }
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500).json({ message: "Error updating user profile", error: error.message });
+  }
+});
+// ========================================================
+// ALIBABA CLOUD DASHSCOPE & QWEN COPILOT API
+// ========================================================
+app.post("/api/ai/chat", async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ success: false, reply: "Prompt message is required" });
+    }
+
+    const systemPrompt = `You are PlantWise AI Agronomist Copilot for farmers in Sindh, Pakistan.
+STRICT TOKEN SAVING & ULTRA-CONCISE RULES:
+- Keep your answer ULTRA-SHORT (strictly 2 to 3 short sentences or maximum 2 concise bullet points).
+- Answer ONLY the exact question asked. DO NOT mention unasked crops (e.g. do not add wheat/tomato/potato unless asked), and do not add long introductions or disclaimers.
+- NEVER use markdown asterisks (no **, no *).
+- Use simple clean bullets (•) if giving points.
+- Match the language used by the farmer (Urdu, Roman Urdu, or English).`;
+
+    let aiReply = null;
+    const qwenApiKey = process.env.QWEN_API || process.env.DASHSCOPE_API_KEY;
+
+    // 1. Try Alibaba DashScope OpenAI-Compatible API (if key is set)
+    if (qwenApiKey && qwenApiKey.startsWith("sk-")) {
+      try {
+        console.log(`🤖 Querying Alibaba DashScope (Qwen-Plus)...`);
+        const response = await fetch("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${qwenApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "qwen-plus",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: message.trim() }
+            ],
+            temperature: 0.4,
+            max_tokens: 110,
+          }),
+        });
+
+        const data = await response.json();
+        const extracted = data?.choices?.[0]?.message?.content;
+        if (response.ok && extracted) {
+          aiReply = extracted;
+          console.log(`✅ Alibaba DashScope Qwen-Plus reply received`);
+        }
+      } catch (dashErr) {
+        console.warn("⚠️ Alibaba DashScope API error, switching to fast Qwen engine:", dashErr.message);
+      }
+    }
+
+    // 2. Fast Qwen Engine Fallback (Groq qwen/qwen3.8-27b)
+    if (!aiReply && groq) {
+      try {
+        console.log(`🤖 Querying Fast Qwen Engine (qwen/qwen3.8-27b)...`);
+        const groqCompletion = await groq.chat.completions.create({
+          model: "qwen/qwen3.8-27b",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message.trim() }
+          ],
+          temperature: 0.4,
+          max_tokens: 110,
+        });
+
+        aiReply = groqCompletion.choices[0]?.message?.content;
+        if (aiReply) {
+          console.log(`✅ Qwen engine reply received successfully`);
+        }
+      } catch (groqErr) {
+        console.warn("Groq Qwen error:", groqErr.message);
+      }
+    }
+
+    // 3. Secondary Fallback (OpenAI gpt-4o-mini)
+    if (!aiReply && openai) {
+      try {
+        const gptCompletion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message.trim() }
+          ],
+          max_tokens: 110,
+        });
+        aiReply = gptCompletion.choices[0]?.message?.content;
+      } catch (gptErr) {
+        console.warn("OpenAI fallback error:", gptErr.message);
+      }
+    }
+
+    if (!aiReply) {
+      return res.status(500).json({
+        success: false,
+        reply: "AI Service temporarily unavailable. Please check your network connection.",
+      });
+    }
+
+    // Clean any remaining markdown asterisks
+    const cleanedReply = aiReply
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .trim();
+
+    return res.status(200).json({
+      success: true,
+      reply: cleanedReply,
+    });
+  } catch (error) {
+    console.error("🚨 Qwen AI Chat Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      reply: `AI Service unavailable: ${error.message}`,
+    });
+  }
+});
+
+// Backwards compatibility alias
+app.post("/qwen-chat", (req, res, next) => {
+  req.url = "/api/ai/chat";
+  app.handle(req, res, next);
 });
 
 
@@ -1076,6 +1276,9 @@ function generateEmailText(plants) {
   }).join('\n\n');
 }
 
+// Mount API Routes
+const whatsappRoutes = require('./routes/whatsappRoutes');
+app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api', router);
 
 app.listen(PORT, () => {
