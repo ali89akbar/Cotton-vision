@@ -579,19 +579,26 @@ export const ImageUpload = () => {
     setChatLoading(true);
 
     try {
-      const response = await axiosInstance.post("/qwen-chat", {
+      const response = await axios.post("http://localhost:8000/qwen-chat", {
         message: userText,
         disease: data?.diagnosis?.predicted_class || "",
         language: language,
-      });
+      }, { timeout: 25000 });
 
       const reply = response.data?.reply || "Follow recommended agronomic guidelines.";
       setChatMessages((prev) => [...prev, { sender: "qwen", text: reply }]);
     } catch (error) {
       console.error("Chat error:", error);
+      const dis = data?.diagnosis?.predicted_class || "Cotton Crop";
+      let dynamicFallback = `For ${dis} management: Apply chemical remedies separately during cool morning hours (6:00 - 9:00 AM) or late evening. Always verify dosage on chemical labels.`;
+      if (language === "ur") {
+        dynamicFallback = `${dis} کے لیے: ہمیشہ صبح کے ٹھنڈے اوقات (6 سے 9 بجے) یا شام میں اسپرے کریں۔ دوائی کی خوراک ایگرو ڈیلر کی ہدایت کے مطابق استعمال کریں۔`;
+      } else if (language === "sd") {
+        dynamicFallback = `${dis} جي علاج لاءِ: هميشه صبح جو يا شام جي وقت اسپري ڪريو. دوائن جو مقدار دروست استعمال ڪريو.`;
+      }
       setChatMessages((prev) => [
         ...prev,
-        { sender: "qwen", text: "Keep crop leaves dry and apply recommended chemical remedies strictly in evening." }
+        { sender: "qwen", text: dynamicFallback }
       ]);
     } finally {
       setChatLoading(false);

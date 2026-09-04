@@ -6,7 +6,10 @@ Wired with multi-lingual Qwen LLM text-generation advisory.
 """
 
 from typing import Dict, Any, Optional
-from qwen_advisory import get_advisory
+try:
+    from qwen_advisory import get_advisory
+except ImportError:
+    from src.qwen_advisory import get_advisory
 
 # Sindh Agronomic Rules Matrix for Cotton (Gossypium hirsutum)
 SINDH_AGRONOMIC_RULES: Dict[str, Dict[str, Any]] = {

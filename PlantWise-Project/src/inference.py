@@ -5,8 +5,12 @@ import numpy as np
 from PIL import Image
 import io
 
-from decision_engine import get_agronomic_advisory
-from data_loader import load_and_preprocess_single_image
+try:
+    from decision_engine import get_agronomic_advisory
+    from data_loader import load_and_preprocess_single_image
+except ImportError:
+    from src.decision_engine import get_agronomic_advisory
+    from src.data_loader import load_and_preprocess_single_image
 
 # Global model cache
 _CACHED_KERAS_MODEL = None

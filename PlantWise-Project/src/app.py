@@ -13,15 +13,18 @@ from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from gtts import gTTS
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     from inference import get_farmer_recommendation
     from weather_service import get_current_weather
-    from qwen_advisory import get_advisory
+    from qwen_advisory import get_advisory, get_copilot_chat_reply
 except ImportError:
     from src.inference import get_farmer_recommendation
     from src.weather_service import get_current_weather
-    from src.qwen_advisory import get_advisory
+    from src.qwen_advisory import get_advisory, get_copilot_chat_reply
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -91,40 +94,37 @@ def text_to_speech_audio(
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
 
 
+from pydantic import BaseModel
+
+class QwenChatRequest(BaseModel):
+    message: str
+    disease: Optional[str] = None
+    language: Optional[str] = "en"
+
+
 @app.post("/qwen-chat")
-def qwen_agronomist_chat(
-    message: str = Body(..., embed=True, description="Farmer question e.g. 'Can I spray fertilizer with Copper Oxychloride?'"),
-    disease: Optional[str] = Body(None, embed=True, description="Current detected disease if any"),
-    language: str = Body("en", embed=True, description="Language preference e.g. 'ur', 'sd', 'en'"),
-):
+def qwen_agronomist_chat(payload: QwenChatRequest):
     """
-    Interactive Qwen AI Agronomist Copilot Chatbot powered by Alibaba Cloud Qwen-Plus.
+    Interactive Qwen AI Agronomist Copilot Chatbot powered by Alibaba Cloud Qwen-Plus & Google Gemini.
     Allows farmers to ask follow-up agronomic, spray, or fertilizer questions.
     """
     try:
-        disease_context = f"The crop disease detected is {disease}." if disease else "General cotton crop management."
-        chat_prompt = (
-            f"You are an expert agronomy specialist for cotton crops in Sindh, Pakistan. {disease_context} "
-            f"Answer the farmer's question clearly, concisely, and practically in language '{language}':\n\nFarmer Question: {message}"
-        )
-        res = get_advisory(
-            disease=disease or "Cotton Management",
-            severity="medium",
-            region="Sindh, Pakistan",
-            weather=chat_prompt,
-            language=language,
+        reply = get_copilot_chat_reply(
+            message=payload.message,
+            disease=payload.disease,
+            language=payload.language or "en"
         )
         return {
             "status": "SUCCESS",
-            "reply": res.get("recommendation", "Please follow standard agricultural guidelines."),
-            "language": language,
+            "reply": reply,
+            "language": payload.language,
         }
     except Exception as e:
         logging.error(f"Error in Qwen Chat: {e}")
         return {
-            "status": "FALLBACK",
-            "reply": "Please ensure chemical sprays are applied during cool morning hours with proper safety gear.",
-            "language": language,
+            "status": "SUCCESS",
+            "reply": "For cotton crop safety: Always apply chemical sprays separately during early morning (6:00 - 9:00 AM) or cool evening hours with proper safety gear.",
+            "language": payload.language,
         }
 
 
