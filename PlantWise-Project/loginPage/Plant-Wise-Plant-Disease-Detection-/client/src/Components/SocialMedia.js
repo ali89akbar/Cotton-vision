@@ -275,7 +275,19 @@ const SocialMedia = () => {
   const userSharedCount = posts.filter((p) => p.user?._id === user?._id).length;
 
   return (
-    <div style={{ minHeight: "100vh", paddingTop: "8.5rem", paddingBottom: "5rem", background: "#f4f9f4", fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      className="h-screen overflow-hidden flex flex-col bg-[#f4f9f4]"
+      style={{
+        height: "100vh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        background: "#f4f9f4",
+        paddingTop: "112px",
+        fontFamily: "'DM Sans', sans-serif",
+        position: "relative",
+      }}
+    >
       <Helmet>
         <title>Plant Care Community - PlantWise</title>
         <meta property="og:site_name" content="PlantWise Community" />
@@ -307,38 +319,41 @@ const SocialMedia = () => {
         </div>
       )}
 
-      {/* HEADER TITLE */}
-      <div style={{ maxWidth: "1280px", margin: "0 auto 2.25rem auto", padding: "0 1.25rem", textAlign: "center" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#ffffff", border: "1.5px solid #bbf7d0", color: "#166534", fontSize: "0.8rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", borderRadius: "50px", padding: "6px 20px", marginBottom: "0.75rem", boxShadow: "0 2px 8px rgba(5,150,105,0.06)" }}>
-          <FaLeaf style={{ color: "#059669" }} /> SINDH FARMER COMMUNITY & FIELD FEED
-        </div>
-        <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "2.6rem", color: "#0f172a", margin: "0 0 0.4rem 0", letterSpacing: "-0.5px" }}>
-          Plant Care <span style={{ color: "#059669" }}>Community Hub</span>
-        </h1>
-        <p style={{ color: "#475569", fontSize: "1.02rem", maxWidth: "620px", margin: "0 auto", lineHeight: 1.5, fontWeight: 500 }}>
-          Share field observations, verify disease symptoms, and connect with fellow growers across Sindh.
-        </p>
-      </div>
-
-      {/* STRICT 3-COLUMN DESKTOP GRID CONTAINER */}
+      {/* FIXED VIEWPORT 3-COLUMN APP CONTAINER */}
       <div
+        className="flex-1 flex justify-center gap-6 px-4 max-w-7xl mx-auto w-full overflow-hidden"
         style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          gap: "1.5rem",
           maxWidth: "1280px",
           margin: "0 auto",
-          padding: "0 1.25rem",
-          display: isDesktop ? "grid" : "flex",
-          flexDirection: isDesktop ? "unset" : "column",
-          gridTemplateColumns: isDesktop ? "290px 1fr 290px" : "1fr",
-          gap: "2rem",
-          alignItems: "start",
+          width: "100%",
+          height: "calc(100vh - 112px)",
+          overflow: "hidden",
         }}
       >
         
         {/* ======================================================== */}
-        {/* 1. LEFT SIDEBAR (STICKY PROFILE SUMMARY CARD) */}
+        {/* 1. LEFT SIDEBAR (STICKY / FIXED HEIGHT PROFILE COLUMN) */}
         {/* ======================================================== */}
         {isDesktop && (
-          <div style={{ width: "290px", position: "sticky", top: "96px", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div
+            className="w-72 shrink-0 h-full overflow-y-auto py-4 scrollbar-none hidden lg:block"
+            style={{
+              width: "288px",
+              flexShrink: 0,
+              height: "100%",
+              overflowY: "auto",
+              padding: "1rem 0 3rem 0",
+              display: isDesktop ? "flex" : "none",
+              flexDirection: "column",
+              gap: "1.25rem",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            }}
+          >
             
             {/* User Profile Card */}
             <div style={{ background: "#ffffff", borderRadius: "20px", border: "1px solid #e2e8f0", boxShadow: "0 4px 15px rgba(0,0,0,0.03)", overflow: "hidden" }}>
@@ -424,9 +439,33 @@ const SocialMedia = () => {
         )}
 
         {/* ======================================================== */}
-        {/* 2. CENTER COLUMN (COMPOSE BOX + POSTS FEED) */}
+        {/* 2. CENTER COLUMN (HEADER + COMPOSE BOX + POSTS FEED) */}
         {/* ======================================================== */}
-        <div style={{ flex: 1, minWidth: 0, width: "100%" }}>
+        <div
+          className="flex-1 max-w-2xl h-full overflow-y-auto py-4 px-2 scrollbar-none"
+          style={{
+            flex: 1,
+            maxWidth: "680px",
+            width: "100%",
+            height: "100%",
+            overflowY: "auto",
+            padding: "1rem 0.5rem 6rem 0.5rem",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {/* COMPACT COMMUNITY HEADER */}
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#ffffff", border: "1.5px solid #bbf7d0", color: "#166534", fontSize: "0.76rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", borderRadius: "50px", padding: "5px 18px", marginBottom: "0.5rem", boxShadow: "0 2px 8px rgba(5,150,105,0.06)" }}>
+              <FaLeaf style={{ color: "#059669" }} /> SINDH FARMER COMMUNITY & FIELD FEED
+            </div>
+            <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "2.1rem", color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "-0.5px" }}>
+              Plant Care <span style={{ color: "#059669" }}>Community Hub</span>
+            </h1>
+            <p style={{ color: "#475569", fontSize: "0.92rem", margin: "0 auto", lineHeight: 1.4, fontWeight: 500 }}>
+              Share field observations & verify disease symptoms across Sindh.
+            </p>
+          </div>
           
           {/* COMPOSE POST TRIGGER BOX */}
           <div
@@ -741,7 +780,21 @@ const SocialMedia = () => {
         {/* 3. RIGHT SIDEBAR (TRENDING TOPICS & CONTRIBUTORS) */}
         {/* ======================================================== */}
         {isDesktop && (
-          <div style={{ width: "290px", position: "sticky", top: "96px", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div
+            className="w-80 shrink-0 h-full overflow-y-auto py-4 scrollbar-none hidden xl:block"
+            style={{
+              width: "310px",
+              flexShrink: 0,
+              height: "100%",
+              overflowY: "auto",
+              padding: "1rem 0 4rem 0",
+              display: isDesktop ? "flex" : "none",
+              flexDirection: "column",
+              gap: "1.25rem",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            }}
+          >
             
             {/* Trending Topics Card */}
             <div style={{ background: "#ffffff", borderRadius: "20px", border: "1px solid #e2e8f0", padding: "1.25rem 1.4rem", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
@@ -821,6 +874,12 @@ const SocialMedia = () => {
               >
                 Contact Agronomist on WhatsApp
               </a>
+            </div>
+
+            {/* Mini Essential Footer / Copyright */}
+            <div style={{ padding: "4px 12px 20px 12px", textAlign: "center", fontSize: "0.72rem", color: "#94a3b8", lineHeight: 1.6 }}>
+              <div>PlantWise Precision Agronomy © 2026</div>
+              <div>Sindh Agricultural Digital Community</div>
             </div>
 
           </div>

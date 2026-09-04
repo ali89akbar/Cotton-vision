@@ -22,6 +22,9 @@ const LenisSmoothScroll = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
+    // Disable global Lenis on fixed-viewport pages like /social-media
+    if (pathname === '/social-media') return;
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -48,29 +51,40 @@ const LenisSmoothScroll = () => {
   return null;
 };
 
+function AppContent() {
+  const location = useLocation();
+  const isCommunityPage = location.pathname === '/social-media';
+
+  return (
+    <>
+      <LenisSmoothScroll />
+      <Headers />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<CompleteProfile />} />
+        <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/outbreak-radar" element={<OutbreakRadar />} />
+        <Route path="/social-media" element={<SocialMedia />} /> 
+        <Route path="/saved-plants" element={<SavedPlants />} />
+        <Route path="/badge-progress" element={<BadgeProgressPage />} />
+        <Route path='/ar' element={<PlantGallery />}/>
+        <Route path='/ar-viewer' element={<ARViewer />}/>
+        <Route path="*" element={<Error />} />
+      </Routes>
+      {!isCommunityPage && <Footer />}
+      <Chatbot />
+    </>
+  );
+}
+
 function App() {
-    return (
-        <NotificationProvider>
-            <LenisSmoothScroll />
-            <Headers />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<CompleteProfile />} />
-                <Route path="/complete-profile" element={<CompleteProfile />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/outbreak-radar" element={<OutbreakRadar />} />
-                <Route path="/social-media" element={<SocialMedia />} /> 
-                <Route path="/saved-plants" element={<SavedPlants />} />
-                <Route path="/badge-progress" element={<BadgeProgressPage />} />
-                <Route path='/ar' element={<PlantGallery />}/>
-                <Route path='/ar-viewer' element={<ARViewer />}/>
-                <Route path="*" element={<Error />} />
-            </Routes>
-            <Footer />
-            <Chatbot />
-        </NotificationProvider>
-    );
+  return (
+    <NotificationProvider>
+      <AppContent />
+    </NotificationProvider>
+  );
 }
 
 export default App;
