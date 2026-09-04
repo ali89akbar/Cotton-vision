@@ -15,6 +15,7 @@ import BadgeProgressPage from './Components/BadgeProgressPage';
 import ARViewer from './Components/ARViewer';
 import PlantGallery from './Components/PlantGallery';
 import Footer from './Components/Footer';
+import Chatbot from './Components/Chatbot';
 import { NotificationProvider } from './Components/NotificationContext';
 
 const LenisSmoothScroll = () => {
@@ -67,6 +68,7 @@ function App() {
                 <Route path="*" element={<Error />} />
             </Routes>
             <Footer />
+            <Chatbot />
         </NotificationProvider>
     );
 }

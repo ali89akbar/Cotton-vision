@@ -1356,63 +1356,6 @@ export const ImageUpload = () => {
         )}
       </div>
 
-      {/* FLOATING FAB CHAT BUTTON */}
-      <Fab
-        className={classes.fabChat}
-        onClick={() => setChatOpen(true)}
-      >
-        <FaComments style={{ fontSize: "1.5rem" }} />
-      </Fab>
-
-      {/* QWEN AI AGRONOMIST COPILOT CHAT DRAWER */}
-      <Drawer
-        anchor="right"
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        classes={{ paper: classes.chatDrawerPaper }}
-      >
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" style={{ fontWeight: 800, color: "#064e3b", display: "flex", alignItems: "center", gap: 8 }}>
-            <FaBrain style={{ color: "#059669" }} /> Qwen AI Agronomist Copilot
-          </Typography>
-          <IconButton size="small" onClick={() => setChatOpen(false)}>
-            <FaTimes />
-          </IconButton>
-        </Box>
-
-        <Typography variant="caption" style={{ color: "#64748b", marginBottom: 12, display: "block" }}>
-          Powered by Alibaba Cloud DashScope Qwen-Plus LLM
-        </Typography>
-
-        <div className={classes.chatBox}>
-          {chatMessages.map((msg, idx) => (
-            <div key={idx} className={msg.sender === "user" ? classes.userBubble : classes.qwenBubble}>
-              {msg.text}
-            </div>
-          ))}
-          {chatLoading && (
-            <div className={classes.qwenBubble} style={{ fontStyle: "italic", opacity: 0.8 }}>
-              Alibaba Qwen is thinking...
-            </div>
-          )}
-        </div>
-
-        <Box display="flex" gridGap={8}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            size="small"
-            placeholder="Ask Qwen e.g. Can I mix fertilizer?"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendChatMessage()}
-          />
-          <IconButton color="primary" onClick={handleSendChatMessage} style={{ background: "#059669", color: "#fff" }}>
-            <FaPaperPlane />
-          </IconButton>
-        </Box>
-      </Drawer>
-
       {/* LOGIN RESTRICTION DIALOG FOR UPLOADING */}
       <Dialog 
         open={showLoginPrompt} 

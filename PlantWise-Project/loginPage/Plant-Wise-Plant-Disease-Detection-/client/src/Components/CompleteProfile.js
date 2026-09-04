@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { FaCheckCircle, FaUserCheck, FaLock } from 'react-icons/fa';
 import { FiUser, FiPhone, FiMapPin, FiLayers, FiCheck } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,6 +44,10 @@ const CompleteProfile = () => {
   // Multi-select Crops State
   const [selectedCrops, setSelectedCrops] = useState(['Cotton']);
 
+  // Edit Mode Flag (true if profile already existed)
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+
   // Smart Autocomplete State for District & City
   const [citySearchTerm, setCitySearchTerm] = useState('Khairpur');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
@@ -55,6 +60,84 @@ const CompleteProfile = () => {
   const [timer, setTimer] = useState(59);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [otpError, setOtpError] = useState('');
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // Helper to format WhatsApp number with Pakistan country code (92)
+  const formatWhatsAppNumber = (rawNumber) => {
+    if (!rawNumber) return '';
+    let digits = rawNumber.toString().replace(/\D/g, '');
+    if (digits.startsWith('0')) {
+      digits = '92' + digits.slice(1);
+    } else if (!digits.startsWith('92') && digits.length === 10) {
+      digits = '92' + digits;
+    }
+    return digits;
+  };
+
+  // PRE-FILL EXISTING USER DATA (FROM BACKEND + LOCALSTORAGE)
+  useEffect(() => {
+    const fetchExistingProfile = async () => {
+      try {
+        setLoadingInitial(true);
+        let existingUser = null;
+
+        // 1. Try fetching from Backend API
+        try {
+          const res = await axios.get('http://localhost:6005/api/user/profile', { withCredentials: true });
+          if (res.data && res.data.user) {
+            existingUser = res.data.user;
+          }
+        } catch (backendErr) {
+          // Fallback to /login/sucess
+          try {
+            const authRes = await axios.get('http://localhost:6005/login/sucess', { withCredentials: true });
+            if (authRes.data && authRes.data.user) {
+              existingUser = authRes.data.user;
+            }
+          } catch (e) {}
+        }
+
+        // 2. Fallback to localStorage
+        if (!existingUser || !existingUser.whatsappNumber) {
+          const localSaved = localStorage.getItem('plantwise_user_profile');
+          if (localSaved) {
+            try {
+              existingUser = { ...existingUser, ...JSON.parse(localSaved) };
+            } catch (e) {}
+          }
+        }
+
+        // 3. Pre-populate form fields
+        if (existingUser) {
+          const name = existingUser.fullName || existingUser.displayName || '';
+          const phone = existingUser.whatsappNumber || '';
+          const city = existingUser.city || 'Khairpur';
+          const land = existingUser.landSize || '';
+          const crops = existingUser.crops && existingUser.crops.length > 0 ? existingUser.crops : ['Cotton'];
+
+          setFormData({
+            fullName: name,
+            whatsappNumber: phone,
+            city: city,
+            landSize: land
+          });
+          setCitySearchTerm(city);
+          setSelectedCrops(crops);
+
+          if (existingUser.isProfileComplete || phone) {
+            setIsEditMode(true);
+            setIsVerified(true); // Already verified
+          }
+        }
+      } catch (err) {
+        console.error("Error pre-filling profile data:", err);
+      } finally {
+        setLoadingInitial(false);
+      }
+    };
+
+    fetchExistingProfile();
+  }, []);
 
   // Click Outside Listener to close City Dropdown
   useEffect(() => {
@@ -155,26 +238,107 @@ const CompleteProfile = () => {
     district.toLowerCase().includes(citySearchTerm.toLowerCase())
   );
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isVerified) return;
 
+    const formattedNumber = formatWhatsAppNumber(formData.whatsappNumber);
+
     const profileData = {
       ...formData,
+      whatsappNumber: formattedNumber,
       crops: selectedCrops,
       mainCrop: selectedCrops[0] || 'Cotton',
       isProfileComplete: true,
       isWhatsappVerified: true
     };
+
+    // 1. Save to backend database via PUT /api/user/profile
+    try {
+      await axios.put('http://localhost:6005/api/user/profile', {
+        fullName: formData.fullName,
+        whatsappNumber: formattedNumber,
+        city: formData.city,
+        landSize: formData.landSize,
+        crops: selectedCrops,
+      }, { withCredentials: true });
+    } catch (saveErr) {
+      console.warn("Could not save to backend database, saving locally:", saveErr.message);
+    }
+
+    // 2. Save to localStorage & trigger storage event
     localStorage.setItem('plantwise_user_profile', JSON.stringify(profileData));
-    navigate('/dashboard');
+    window.dispatchEvent(new Event('storage'));
+
+    // 3. WhatsApp Notification Logic: ONLY trigger 'welcome' if this was initial onboarding (NOT an edit)
+    if (!isEditMode) {
+      const sendWelcomeAlert = async () => {
+        try {
+          const response = await fetch('http://localhost:6005/api/whatsapp/send-alert', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              phoneNumber: formattedNumber,
+              alertType: 'welcome',
+            }),
+          });
+          const data = await response.json();
+          console.log('📱 WhatsApp Welcome Alert Response:', data);
+        } catch (waErr) {
+          console.warn('⚠️ WhatsApp Welcome Alert Delivery skipped/failed:', waErr.message);
+        }
+      };
+
+      sendWelcomeAlert();
+      setToastMessage('Profile Completed! Check your WhatsApp for a welcome message.');
+    } else {
+      setToastMessage('Profile updated successfully!');
+    }
+
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1600);
   };
 
   const isPhoneValid = formData.whatsappNumber.replace(/\D/g, '').length >= 10;
 
   return (
-    <div style={{ minHeight: '100vh', paddingTop: '8.5rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem', background: 'linear-gradient(180deg, #f0fdf4 0%, #f8fafc 50%, #e2e8f0 100%)' }}>
+    <div style={{ minHeight: '100vh', paddingTop: '8.5rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem', background: 'linear-gradient(180deg, #f0fdf4 0%, #f8fafc 50%, #e2e8f0 100%)', position: 'relative' }}>
       
+      {/* TOAST NOTIFICATION */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            style={{
+              position: 'fixed',
+              top: '90px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 99999,
+              background: '#064e3b',
+              color: '#ffffff',
+              padding: '12px 28px',
+              borderRadius: '50px',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.2)',
+              border: '1.5px solid #34d399',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+            <FaCheckCircle style={{ color: '#34d399', fontSize: '1.2rem' }} />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Spacious Single-Column Form Card (max-w-4xl) */}
       <div 
         style={{ 
@@ -192,19 +356,21 @@ const CompleteProfile = () => {
         {/* Page Header */}
         <div style={{ marginBottom: '2.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '1.5rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(240, 253, 244, 0.95)', border: '1px solid #bbf7d0', color: '#166534', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', borderRadius: '50px', padding: '6px 18px', marginBottom: '1rem' }}>
-            <FaUserCheck /> ONBOARDING & FARM SETTINGS
+            <FaUserCheck /> {isEditMode ? "FARMER PROFILE SETTINGS" : "ONBOARDING & FARM SETTINGS"}
           </div>
 
           <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: '2.5rem', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '-0.5px' }}>
-            Complete Your Farmer Profile
+            {isEditMode ? "Manage Your Farmer Profile" : "Complete Your Farmer Profile"}
           </h1>
 
           <div style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.35rem', color: '#059669', marginBottom: '8px', lineHeight: 1.8 }}>
-            اپنا کسان پروفائل مکمل کریں
+            {isEditMode ? "اپنا کسان پروفائل اپڈیٹ کریں" : "اپنا کسان پروفائل مکمل کریں"}
           </div>
 
           <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.92rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-            Help us customize your weather alerts and AI diagnostics by providing your farm details.
+            {isEditMode
+              ? "Update your phone number, agricultural region, and crop preferences to fine-tune AI advisories."
+              : "Help us customize your weather alerts and AI diagnostics by providing your farm details."}
           </p>
         </div>
 
@@ -225,7 +391,7 @@ const CompleteProfile = () => {
                 required
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                placeholder="e.g. Muhammad Ali Khan"
+                placeholder="e.g. Muhammad Ali"
                 style={{
                   width: '100%',
                   height: '52px',
@@ -257,212 +423,150 @@ const CompleteProfile = () => {
           {/* FIELD 2: WHATSAPP NUMBER WITH INLINE OTP VERIFICATION */}
           <div>
             <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.88rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
-              <span>WhatsApp Number (for auto-alerts)</span>
-              <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.1rem', color: '#059669' }}>واٹس ایپ نمبر</span>
+              <span>WhatsApp Number (For Automated Crop Alerts)</span>
+              <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.1rem', color: '#059669' }}>واٹس ایپ نمبر (فصل کے الرٹس کے لیے)</span>
             </label>
 
-            <div 
-              style={{ 
-                position: 'relative', 
-                display: 'flex', 
-                alignItems: 'center',
-                borderRadius: '14px',
-                border: isVerified ? '2px solid #059669' : '1.5px solid #e2e8f0',
-                background: isVerified ? '#f0fdf4' : '#f8fafc',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <FiPhone style={{ position: 'absolute', left: '16px', color: isVerified ? '#059669' : '#64748b', fontSize: '1.2rem' }} />
-              
-              <input
-                type="text"
-                required
-                disabled={isVerified}
-                value={formData.whatsappNumber}
-                onChange={(e) => {
-                  setFormData({ ...formData, whatsappNumber: e.target.value });
-                  setOtpError('');
-                }}
-                placeholder="+92 300 1234567"
-                style={{
-                  width: '100%',
-                  height: '52px',
-                  borderRadius: '14px',
-                  border: 'none',
-                  paddingLeft: '48px',
-                  paddingRight: '140px',
-                  fontSize: '0.95rem',
-                  color: isVerified ? '#064e3b' : '#0f172a',
-                  background: 'transparent',
-                  outline: 'none',
-                  fontWeight: isVerified ? 700 : 400,
-                  fontFamily: "'DM Sans', sans-serif"
-                }}
-              />
-
-              {/* ACTION RIGHT BUTTON / BADGE */}
-              <div style={{ position: 'absolute', right: '10px' }}>
-                {isVerified ? (
-                  <div 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: '#dcfce7',
-                      color: '#15803d',
-                      border: '1px solid #86efac',
-                      padding: '6px 14px',
-                      borderRadius: '50px',
-                      fontWeight: 800,
-                      fontSize: '0.8rem',
-                      boxShadow: '0 2px 8px rgba(34, 197, 94, 0.15)'
-                    }}
-                  >
-                    <span>✅ Verified / تصدیق شدہ</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={!isPhoneValid || otpSent}
-                    onClick={handleSendOtp}
-                    style={{
-                      background: isPhoneValid ? (otpSent ? '#e2e8f0' : '#f1f5f9') : '#f1f5f9',
-                      color: isPhoneValid ? '#059669' : '#94a3b8',
-                      border: '1px solid #cbd5e1',
-                      padding: '7px 16px',
-                      borderRadius: '10px',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      cursor: isPhoneValid ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (isPhoneValid && !otpSent) {
-                        e.currentTarget.style.background = '#d1fae5';
-                        e.currentTarget.style.borderColor = '#6ee7b7';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (isPhoneValid && !otpSent) {
-                        e.currentTarget.style.background = '#f1f5f9';
-                        e.currentTarget.style.borderColor = '#cbd5e1';
-                      }
-                    }}
-                  >
-                    {otpSent ? 'Code Sent / کوڈ بھیجا گیا' : 'Send OTP / کوڈ بھیجیں'}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* OTP INPUT SECTION (Framer-Motion Slide-Down) */}
-            <AnimatePresence>
-              {otpSent && !isVerified && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                  animate={{ opacity: 1, height: 'auto', marginTop: 14 }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  transition={{ duration: 0.35, ease: 'easeOut' }}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FiPhone style={{ position: 'absolute', left: '16px', color: '#059669', fontSize: '1.2rem' }} />
+                <input
+                  type="tel"
+                  required
+                  value={formData.whatsappNumber}
+                  onChange={(e) => {
+                    setFormData({ ...formData, whatsappNumber: e.target.value });
+                    if (isVerified && e.target.value !== formData.whatsappNumber) {
+                      setIsVerified(false); // require re-verify if number changed
+                    }
+                  }}
+                  placeholder="e.g. 0336 0069977"
                   style={{
-                    background: '#f0fdf4',
-                    border: '1.5px solid #bbf7d0',
-                    borderRadius: '20px',
-                    padding: '1.25rem 1.5rem',
-                    boxShadow: '0 10px 25px -5px rgba(5, 150, 105, 0.08)'
+                    width: '100%',
+                    height: '52px',
+                    borderRadius: '14px',
+                    border: isVerified ? '2px solid #059669' : '1.5px solid #e2e8f0',
+                    paddingLeft: '48px',
+                    paddingRight: '16px',
+                    fontSize: '0.95rem',
+                    color: '#0f172a',
+                    background: isVerified ? '#f0fdf4' : '#f8fafc',
+                    outline: 'none',
+                    transition: 'all 0.3s ease',
+                    fontFamily: "'DM Sans', sans-serif"
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#059669';
+                    e.target.style.background = '#ffffff';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(5, 150, 105, 0.15)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = isVerified ? '#059669' : '#e2e8f0';
+                    e.target.style.background = isVerified ? '#f0fdf4' : '#f8fafc';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+
+              {/* Verified Badge or Send OTP Button */}
+              {isVerified ? (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#dcfce7', color: '#15803d', border: '1.5px solid #86efac', borderRadius: '14px', height: '52px', padding: '0 20px', fontWeight: 800, fontSize: '0.88rem' }}>
+                  <FaCheckCircle style={{ color: '#16a34a' }} /> Verified
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!isPhoneValid || isTimerActive}
+                  onClick={handleSendOtp}
+                  style={{
+                    height: '52px',
+                    padding: '0 24px',
+                    borderRadius: '14px',
+                    background: isPhoneValid && !isTimerActive ? '#059669' : '#e2e8f0',
+                    color: isPhoneValid && !isTimerActive ? '#ffffff' : '#94a3b8',
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    border: 'none',
+                    cursor: isPhoneValid && !isTimerActive ? 'pointer' : 'not-allowed',
+                    boxShadow: isPhoneValid && !isTimerActive ? '0 4px 14px rgba(5, 150, 105, 0.25)' : 'none',
+                    transition: 'all 0.3s ease',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#064e3b' }}>
-                      Enter 4-Digit OTP Code (Demo Code: <strong>1234</strong>)
-                    </span>
-                    <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif", fontSize: '1rem', color: '#059669' }}>
-                      ایس ایم ایس پر موصول ہونے والا 4 ہندسوں کا کوڈ درج کریں
-                    </span>
-                  </div>
-
-                  {/* 4 Square Input Boxes */}
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', margin: '1rem 0' }}>
-                    {otpDigits.map((digit, index) => (
-                      <input
-                        key={index}
-                        id={`otp-box-${index}`}
-                        type="text"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        style={{
-                          width: '48px',
-                          height: '48px',
-                          textAlign: 'center',
-                          fontSize: '1.25rem',
-                          fontWeight: 800,
-                          color: '#064e3b',
-                          borderRadius: '12px',
-                          border: '2px solid #a7f3d0',
-                          background: '#ffffff',
-                          outline: 'none',
-                          boxShadow: '0 4px 10px rgba(0,0,0,0.03)',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#059669';
-                          e.target.style.boxShadow = '0 0 0 3px rgba(5, 150, 105, 0.2)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#a7f3d0';
-                          e.target.style.boxShadow = '0 4px 10px rgba(0,0,0,0.03)';
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Error & Timer Info */}
-                  <div style={{ textAlign: 'center', fontSize: '0.82rem', color: '#475569' }}>
-                    {otpError && (
-                      <div style={{ color: '#dc2626', fontWeight: 700, marginBottom: '6px' }}>
-                        ⚠️ {otpError}
-                      </div>
-                    )}
-
-                    {timer > 0 ? (
-                      <span>Enter code sent via SMS. Resend available in <strong>00:{timer < 10 ? `0${timer}` : timer}</strong></span>
-                    ) : (
-                      <span>
-                        Didn't receive the SMS code?{' '}
-                        <button
-                          type="button"
-                          onClick={handleSendOtp}
-                          style={{ background: 'none', border: 'none', color: '#059669', fontWeight: 800, textDecoration: 'underline', cursor: 'pointer' }}
-                        >
-                          Resend OTP / دوبارہ بھیجیں
-                        </button>
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
+                  {isTimerActive ? `Resend in ${timer}s` : 'Verify Number'}
+                </button>
               )}
-            </AnimatePresence>
+            </div>
+
+            {/* OTP ENTER BOXES (WHEN SENT) */}
+            {otpSent && !isVerified && (
+              <div style={{ marginTop: '12px', background: '#f8fafc', border: '1.5px dashed #059669', borderRadius: '16px', padding: '16px 20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+                    Enter 4-digit code sent to WhatsApp:
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700 }}>
+                    Demo code: 1234
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`otp-box-${idx}`}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      style={{
+                        width: '46px',
+                        height: '50px',
+                        textAlign: 'center',
+                        fontSize: '1.25rem',
+                        fontWeight: 800,
+                        borderRadius: '12px',
+                        border: '2px solid #cbd5e1',
+                        background: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = '#059669')}
+                      onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                    />
+                  ))}
+                </div>
+
+                {otpError && (
+                  <div style={{ color: '#dc2626', fontSize: '0.78rem', fontWeight: 700, marginTop: '8px', textAlign: 'center' }}>
+                    {otpError}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* FIELD 3 & 4: SEARCHABLE DISTRICT & LAND SIZE */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          {/* FIELD 3 & 4: 2-COLUMN ROW (DISTRICT & LAND SIZE) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
             
-            {/* Searchable District & City Dropdown */}
+            {/* Smart District & City Dropdown */}
             <div ref={cityDropdownRef} style={{ position: 'relative' }}>
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.88rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
-                <span>District & City</span>
-                <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.1rem', color: '#059669' }}>ضلع اور شہر</span>
+                <span>Agricultural Region / District</span>
+                <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.1rem', color: '#059669' }}>زرعی علاقہ / ضلع</span>
               </label>
 
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <FiMapPin style={{ position: 'absolute', left: '16px', color: '#059669', fontSize: '1.2rem', zIndex: 1 }} />
+                <FiMapPin style={{ position: 'absolute', left: '16px', color: '#059669', fontSize: '1.2rem' }} />
                 <input
                   type="text"
                   required
                   value={citySearchTerm}
                   onChange={handleCityInputChange}
-                  placeholder="Type district or city e.g. Khairpur..."
+                  onFocus={() => setShowCityDropdown(true)}
+                  placeholder="Search Sindh district..."
                   style={{
                     width: '100%',
                     height: '52px',
@@ -477,37 +581,32 @@ const CompleteProfile = () => {
                     transition: 'all 0.3s ease',
                     fontFamily: "'DM Sans', sans-serif"
                   }}
-                  onFocus={(e) => {
-                    setShowCityDropdown(true);
-                    e.target.style.borderColor = '#059669';
-                    e.target.style.background = '#ffffff';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(5, 150, 105, 0.15)';
-                  }}
                 />
               </div>
 
-              {/* SEARCHABLE DROPDOWN MENU */}
+              {/* Autocomplete Suggestions Menu */}
               {showCityDropdown && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: 'calc(100% + 6px)',
+                    top: '100%',
                     left: 0,
-                    right: 0,
+                    width: '100%',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
                     borderRadius: '16px',
-                    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.12)',
-                    maxHeight: '190px',
-                    overflowY: 'auto',
-                    zIndex: 100,
+                    boxShadow: '0 15px 35px rgba(0,0,0,0.12)',
+                    zIndex: 50,
+                    marginTop: '6px',
                     padding: '6px'
                   }}
                 >
                   {filteredDistricts.length > 0 ? (
-                    filteredDistricts.map((district) => (
+                    filteredDistricts.map((district, idx) => (
                       <div
-                        key={district}
+                        key={idx}
                         onClick={() => handleSelectCity(district)}
                         style={{
                           padding: '10px 14px',
@@ -519,26 +618,18 @@ const CompleteProfile = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          transition: 'all 0.2s ease'
+                          background: formData.city === district ? '#f0fdf4' : 'transparent',
                         }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#f0fdf4';
-                          e.currentTarget.style.color = '#059669';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = '#334155';
-                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = formData.city === district ? '#f0fdf4' : 'transparent')}
                       >
-                        <span>🌾 {district}</span>
-                        {citySearchTerm.toLowerCase() === district.toLowerCase() && (
-                          <FiCheck style={{ color: '#059669' }} />
-                        )}
+                        <span>{district}</span>
+                        {formData.city === district && <FiCheck style={{ color: '#059669' }} />}
                       </div>
                     ))
                   ) : (
-                    <div style={{ padding: '12px', textAlign: 'center', fontSize: '0.85rem', color: '#94a3b8' }}>
-                      No matching district found. You can keep typing your city name.
+                    <div style={{ padding: '12px', fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>
+                      No matching district found
                     </div>
                   )}
                 </div>
@@ -693,8 +784,10 @@ const CompleteProfile = () => {
               {isVerified ? (
                 <>
                   <FaCheckCircle style={{ fontSize: '1.2rem' }} />
-                  <span>Save Profile & Go to Dashboard /</span>
-                  <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.25rem' }}>پروفائل محفوظ کریں</span>
+                  <span>{isEditMode ? "Update Profile & Save Changes /" : "Save Profile & Go to Dashboard /"}</span>
+                  <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.25rem' }}>
+                    {isEditMode ? "پروفائل اپڈیٹ کریں" : "پروفائل محفوظ کریں"}
+                  </span>
                 </>
               ) : (
                 <>

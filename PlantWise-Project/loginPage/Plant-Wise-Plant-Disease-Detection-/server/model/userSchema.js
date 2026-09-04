@@ -28,6 +28,12 @@ const userSchema = new mongoose.Schema({
   displayName: String,
   email: String,
   image: String,
+  fullName: String,
+  whatsappNumber: String,
+  city: { type: String, default: "Khairpur" },
+  landSize: String,
+  crops: { type: [String], default: ["Cotton"] },
+  isProfileComplete: { type: Boolean, default: false },
   predictions: [predictionSchema],
   badges: [badgeSchema],
   badgeProgress: {
