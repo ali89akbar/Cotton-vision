@@ -66,7 +66,31 @@ const SocialMedia = () => {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
   const fileInputRef = useRef(null);
+  const centerFeedRef = useRef(null);
   const navigate = useNavigate();
+
+  // GLOBAL WHEEL SCROLL FORWARDING (FACEBOOK WEB BEHAVIOR)
+  useEffect(() => {
+    const handleGlobalWheel = (e) => {
+      const target = e.target;
+      // If cursor is specifically over a scrollable sidebar or popup modal, let that container scroll
+      if (
+        target.closest('.sidebar-scrollable') ||
+        target.closest('.modal-scrollable') ||
+        target.closest('.chatbot-wrapper')
+      ) {
+        return;
+      }
+
+      // If cursor is anywhere else (background, margins, header, outer wrapper), forward scroll to center feed
+      if (centerFeedRef.current && !target.closest('.feed-scrollable-container')) {
+        centerFeedRef.current.scrollTop += e.deltaY;
+      }
+    };
+
+    window.addEventListener('wheel', handleGlobalWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleGlobalWheel);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -340,7 +364,7 @@ const SocialMedia = () => {
         {/* ======================================================== */}
         {isDesktop && (
           <div
-            className="w-72 shrink-0 h-full overflow-y-auto py-4 scrollbar-none hidden lg:block"
+            className="sidebar-scrollable w-72 shrink-0 h-full overflow-y-auto py-4 scrollbar-none hidden lg:block"
             style={{
               width: "288px",
               flexShrink: 0,
@@ -442,7 +466,8 @@ const SocialMedia = () => {
         {/* 2. CENTER COLUMN (HEADER + COMPOSE BOX + POSTS FEED) */}
         {/* ======================================================== */}
         <div
-          className="flex-1 max-w-2xl h-full overflow-y-auto py-4 px-2 scrollbar-none"
+          ref={centerFeedRef}
+          className="feed-scrollable-container flex-1 max-w-2xl h-full overflow-y-auto py-4 px-2 scrollbar-none"
           style={{
             flex: 1,
             maxWidth: "680px",
@@ -781,7 +806,7 @@ const SocialMedia = () => {
         {/* ======================================================== */}
         {isDesktop && (
           <div
-            className="w-80 shrink-0 h-full overflow-y-auto py-4 scrollbar-none hidden xl:block"
+            className="sidebar-scrollable w-80 shrink-0 h-full overflow-y-auto py-4 scrollbar-none hidden xl:block"
             style={{
               width: "310px",
               flexShrink: 0,
