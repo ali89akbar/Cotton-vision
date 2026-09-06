@@ -13,7 +13,7 @@ import {
 import { makeStyles } from '@material-ui/core/styles';
 import { Facebook } from '@material-ui/icons';
 
-import axios from "axios";
+import { api } from "../Services/apiClient";
 
 const useStyles = makeStyles((theme) => ({
   plantCard: {
@@ -88,7 +88,7 @@ const BadgeProgressPage = () => {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:6005/login/sucess', { withCredentials: true })
+    api.get('/login/sucess')
       .then(res => {
         if (res.data && res.data.user) {
           setUser(res.data.user);
@@ -118,22 +118,22 @@ const BadgeProgressPage = () => {
       fjs.parentNode.insertBefore(js, fjs);
     }(document, 'script', 'facebook-jssdk'));
 
+    const fetchProtected = (url) => api.get(url).then(res => res.data).catch(() => null);
+
     const fetchData = async () => {
       try {
-        const progressResponse = await fetch("http://localhost:6005/api/user/plant-progress", {
-          credentials: "include",
-        });
-        const badgesResponse = await fetch("http://localhost:6005/api/user/badges", {
-          credentials: "include",
-        });
+        // `api` adds 'Authorization: Bearer <token>', so locally registered
+        // farmers (no Google session cookie) still see their own progress.
+        const [progressData, badgesData] = await Promise.all([
+          fetchProtected('/api/user/plant-progress'),
+          fetchProtected('/api/user/badges'),
+        ]);
 
-        if (progressResponse.ok) {
-          const progressData = await progressResponse.json();
+        if (progressData) {
           setPlantProgress(progressData);
         }
 
-        if (badgesResponse.ok) {
-          const badgesData = await badgesResponse.json();
+        if (badgesData) {
           setBadges(badgesData.badges || []);
         }
       } catch (error) {

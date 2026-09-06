@@ -68,9 +68,9 @@ function AppContent() {
         <Route path="/outbreak-radar" element={<OutbreakRadar />} />
         <Route path="/social-media" element={<SocialMedia />} /> 
         <Route path="/saved-plants" element={<SavedPlants />} />
-        <Route path="/badge-progress" element={<BadgeProgressPage />} />
+        {/* <Route path="/badge-progress" element={<BadgeProgressPage />} />
         <Route path='/ar' element={<PlantGallery />}/>
-        <Route path='/ar-viewer' element={<ARViewer />}/>
+        <Route path='/ar-viewer' element={<ARViewer />}/> */}
         <Route path="*" element={<Error />} />
       </Routes>
       {!isCommunityPage && <Footer />}

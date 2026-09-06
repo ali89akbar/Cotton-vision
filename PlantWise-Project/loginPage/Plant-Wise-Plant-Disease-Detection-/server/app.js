@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const https = require("https");
 const dns = require("node:dns");
 dns.setServers([
   "8.8.8.8",
@@ -9,7 +10,7 @@ dns.setServers([
 ]);
 require("./db/conn");
 const router = express.Router();
-const PORT = 6005;
+const PORT = process.env.PORT || 6005;
 const session = require("express-session");
 const passport = require("passport");
 const cron = require("node-cron");
@@ -20,17 +21,39 @@ const OAuth2Strategy = require("passport-google-oauth2").Strategy;
 const userdb = require("./model/userSchema");
 const Plant = require("./model/plantSchema");
 const Post = require("./model/postSchema");
+const { isAuthenticated, optionalAuth } = require("./middleware/authMiddleware");
+const { signToken } = require("./utils/jwt");
+const { publicProfile } = require("./utils/serializeUser");
 
 const clientid = process.env.CLIENT_ID;
 const clientsecret = process.env.CLIENT_SECRET;
 
-// Authentication middleware
-const isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
-};
+// Google's current OAuth 2.0 endpoints. `passport-google-oauth2` is unmaintained
+// and defaults the code-for-token exchange to the legacy
+// https://www.googleapis.com/oauth2/v4/token host, so both URLs are pinned here
+// instead of relying on the package's built-in defaults.
+const GOOGLE_AUTH_URL = process.env.GOOGLE_AUTH_URL || "https://accounts.google.com/o/oauth2/v2/auth";
+const GOOGLE_TOKEN_URL = process.env.GOOGLE_TOKEN_URL || "https://oauth2.googleapis.com/token";
+// Google's OpenID Connect profile endpoint. The npm package hardcodes the same
+// lookup on www.googleapis.com, which is reset on some networks/firewalls, so
+// the URL is ours to choose (see googleStrategy.userProfile below).
+const GOOGLE_USERINFO_URL = process.env.GOOGLE_USERINFO_URL || "https://openidconnect.googleapis.com/v1/userinfo";
+
+// Must be ABSOLUTE and match a redirect URI listed in Google Cloud Console
+// character for character. A relative callbackURL is rebuilt from the Host
+// header, so opening the API through 127.0.0.1, localhost or a tunnel silently
+// changes it and Google rejects the exchange.
+const PUBLIC_API_URL = (process.env.PUBLIC_API_URL || `http://localhost:${PORT}`).replace(/\/+$/, "");
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || `${PUBLIC_API_URL}/auth/google/callback`;
+
+// Where the CRA dev server is reachable (npm start runs it with HTTPS=true).
+const CLIENT_ORIGINS = (process.env.CLIENT_ORIGINS ||
+  "http://localhost:3000,https://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || CLIENT_ORIGINS[0] || "http://localhost:3000";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -45,12 +68,21 @@ try {
   console.error("Failed to initialize Groq client:", err.message);
 }
 
-// Enhanced CORS configuration
+// Enhanced CORS configuration - must let the Authorization header through so
+// bearer tokens reach the JWT middleware.
 app.use(cors({
-  origin: "http://localhost:3000",
-  methods: "GET,POST,PUT,DELETE",
+  origin: (origin, callback) => {
+    // Allow non-browser tools (curl, Postman, server-to-server) with no origin.
+    if (!origin) return callback(null, true);
+    if (CLIENT_ORIGINS.includes(origin) || CLIENT_ORIGIN === origin) {
+      return callback(null, true);
+    }
+    console.warn(`CORS blocked request from origin: ${origin}`);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
@@ -73,32 +105,121 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Passport Google OAuth Strategy
-passport.use(
-  new OAuth2Strategy({
+if (!clientid || !clientsecret) {
+  console.warn("[google-oauth] CLIENT_ID / CLIENT_SECRET are not set - Google Sign-In will answer 503 until server/.env provides them.");
+}
+
+/**
+ * passport reports every token-exchange problem as "Failed to obtain access
+ * token". The real cause lives in err.oauthError: an Error for socket/TLS
+ * failures, or { statusCode, data } when Google answered with HTTP 4xx.
+ */
+const describeOAuthError = (err) => {
+  const cause = (err && err.oauthError) || err;
+  if (!cause) return "unknown error";
+
+  if (cause.statusCode) {
+    const data = typeof cause.data === "string" ? cause.data.slice(0, 300) : JSON.stringify(cause.data);
+    return `HTTP ${cause.statusCode} ${data}`;
+  }
+  if (cause instanceof Error || cause.message) {
+    const where = cause.syscall ? ` (${cause.syscall}${cause.address ? ` ${cause.address}:${cause.port}` : ""})` : "";
+    return `${cause.code || cause.name || "Error"}: ${cause.message}${where}`;
+  }
+  return String(cause);
+};
+
+const googleStrategy = new OAuth2Strategy(
+  {
     clientID: clientid,
     clientSecret: clientsecret,
-    callbackURL: "/auth/google/callback",
+    authorizationURL: GOOGLE_AUTH_URL,
+    tokenURL: GOOGLE_TOKEN_URL,
+    callbackURL: GOOGLE_CALLBACK_URL,
     scope: ["profile", "email"]
   },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        // Restricted scopes can omit emails/photos, so never index [0] blindly.
+        const email = (profile.emails && profile.emails[0] && profile.emails[0].value) || profile.email || "";
+        const image = (profile.photos && profile.photos[0] && profile.photos[0].value) || profile.picture || "";
+
         let user = await userdb.findOne({ googleId: profile.id });
+
+        if (!user && email) {
+          // Adopt a legacy record that has this address but no password and no
+          // Google link, so the farmer keeps one account instead of two.
+          user = await userdb.findOne({ email, googleId: { $exists: false }, password: { $exists: false } });
+          if (user) {
+            user.googleId = profile.id;
+            user.provider = "google";
+            console.log(`[google-oauth] linked Google identity to existing account ${user._id}`);
+          }
+        }
 
         if (!user) {
           user = new userdb({
             googleId: profile.id,
             displayName: profile.displayName,
-            email: profile.emails[0].value,
-            image: profile.photos[0].value
+            email,
+            image,
+            provider: "google",
+            role: "farmer",
+            // Google gives us a verified address, so SMS/WhatsApp OTP is not
+            // forced at sign-up; onboarding still asks for the number.
+            isWhatsappVerified: false
           });
           await user.save();
+        } else {
+          let dirty = false;
+          if (!user.displayName && profile.displayName) { user.displayName = profile.displayName; dirty = true; }
+          if (!user.email && email) { user.email = email; dirty = true; }
+          if (!user.image && image) { user.image = image; dirty = true; }
+          if (dirty) await user.save();
         }
         return done(null, user);
       } catch (error) {
         return done(error, null);
       }
     }
-  ));
+);
+
+/**
+ * Replaces the package's profile lookup, which is pinned to
+ * https://www.googleapis.com/oauth2/v3/userinfo - the very host whose TLS is
+ * reset on some networks, meaning sign-in would die immediately after a
+ * successful token exchange. Returns the same profile shape the verify callback
+ * above expects (id / displayName / emails / photos).
+ */
+googleStrategy.userProfile = function (accessToken, done) {
+  const req = https.get(GOOGLE_USERINFO_URL, { headers: { Authorization: `Bearer ${accessToken}` } }, (res) => {
+    let body = "";
+    res.on("data", (chunk) => (body += chunk));
+    res.on("end", () => {
+      if (res.statusCode < 200 || res.statusCode > 299) {
+        return done(new Error(`Google userinfo answered HTTP ${res.statusCode}: ${body.slice(0, 200)}`));
+      }
+      try {
+        const json = JSON.parse(body);
+        const email = json.email || "";
+        done(null, {
+          provider: "google",
+          id: json.sub, // stable Google user id
+          displayName: json.name,
+          emails: email ? [{ value: email, type: "account" }] : [],
+          photos: json.picture ? [{ value: json.picture, type: "default" }] : [],
+          _json: json,
+        });
+      } catch (parseErr) {
+        done(parseErr);
+      }
+    });
+  });
+  req.setTimeout(15000, () => req.destroy(new Error(`Google userinfo timed out (${GOOGLE_USERINFO_URL})`)));
+  req.on("error", (err) => done(err));
+};
+
+passport.use(googleStrategy);
 ////////////////////////////////////
 // const awardBadge = async (user, badgeName) => {
 //   const alreadyHasBadge = user.badges?.some(b => b.name === badgeName);
@@ -217,7 +338,7 @@ app.post("/save-prediction", isAuthenticated, async (req, res) => {
       language,
     } = req.body;
 
-    const user = await userdb.findOne({ googleId: req.user.googleId });
+    const user = await userdb.findById(req.user._id || req.user.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -269,7 +390,7 @@ app.post("/save-prediction", isAuthenticated, async (req, res) => {
 
 router.get("/predictions", isAuthenticated, async (req, res) => {
   try {
-    const user = await userdb.findOne({ googleId: req.user.googleId }).lean();
+    const user = await userdb.findById(req.user._id || req.user.id).lean();
     if (user && user.predictions) {
       return res.status(200).json(user.predictions); // ← Return the full predictions array with morning & night routines
     }
@@ -726,106 +847,86 @@ app.delete("/api/posts/:postId", isAuthenticated, async (req, res) => {
 
 // ============ AUTH ROUTES ============
 
-app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+// Local (JWT) + profile-completion endpoints. Mounted here so they are
+// registered before the generic /api router at the bottom of the file.
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);   // canonical: /api/users/complete-profile
+app.use("/api/user", userRoutes);    // legacy aliases: /api/user/profile
 
-app.get("/auth/google/callback", passport.authenticate("google", {
-  successRedirect: "http://localhost:3000/dashboard",
-  failureRedirect: "http://localhost:3000/login"
-}));
-
-app.get("/login/sucess", async (req, res) => {
-  if (req.user) {
-    res.status(200).json({
-      message: "Login successful",
-      user: {
-        _id: req.user._id,
-        displayName: req.user.displayName,
-        email: req.user.email,
-        image: req.user.image,
-        googleId: req.user.googleId,
-        fullName: req.user.fullName || req.user.displayName,
-        whatsappNumber: req.user.whatsappNumber || "",
-        city: req.user.city || "Khairpur",
-        landSize: req.user.landSize || "",
-        crops: req.user.crops || ["Cotton"],
-        isProfileComplete: req.user.isProfileComplete || false,
-        badges: req.user.badges,
-        badgeProgress: req.user.badgeProgress,
-        predictions: req.user.predictions
-      }
+app.get("/auth/google", (req, res, next) => {
+  if (!clientid || !clientsecret) {
+    return res.status(503).json({
+      success: false,
+      code: "google_not_configured",
+      message: "Google Sign-In needs CLIENT_ID and CLIENT_SECRET in server/.env",
     });
-  } else {
-    res.status(401).json({ message: "User not authenticated" });
   }
+  // `select_account` re-shows the chooser; without it a stale Google cookie can
+  // silently sign the farmer into the wrong account.
+  return passport.authenticate("google", { scope: ["profile", "email"], prompt: "select_account" })(req, res, next);
 });
 
-// GET User Profile
-app.get("/api/user/profile", isAuthenticated, async (req, res) => {
-  try {
-    const user = await userdb.findById(req.user._id || req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.status(200).json({
-      success: true,
-      user: {
-        _id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-        image: user.image,
-        fullName: user.fullName || user.displayName,
-        whatsappNumber: user.whatsappNumber || "",
-        city: user.city || "Khairpur",
-        landSize: user.landSize || "",
-        crops: user.crops || ["Cotton"],
-        isProfileComplete: user.isProfileComplete || false
-      }
-    });
-  } catch (error) {
-    console.error("Error fetching user profile:", error);
-    res.status(500).json({ message: "Error fetching user profile", error: error.message });
-  }
-});
-
-// PUT / UPDATE User Profile
-app.put("/api/user/profile", isAuthenticated, async (req, res) => {
-  try {
-    const { fullName, whatsappNumber, city, landSize, crops } = req.body;
-    const user = await userdb.findById(req.user._id || req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+// On success a JWT is handed to the SPA through the URL *fragment* (never sent
+// to servers or referrers), so Google and local sign-in share one client path.
+// A custom passport callback is used so a failed exchange reports WHY instead of
+// dying inside Express's default handler with a generic InternalOAuthError.
+app.get("/auth/google/callback", (req, res, next) => {
+  passport.authenticate("google", { session: true }, async (err, user, info) => {
+    if (err || !user) {
+      const reason = err
+        ? describeOAuthError(err)
+        : (info && (info.message || info)) || "Google did not return a user";
+      console.error(`[google-oauth] ${err ? "token exchange / profile load FAILED" : "sign-in REFUSED"}: ${reason}`);
+      console.error(`[google-oauth] token endpoint: ${GOOGLE_TOKEN_URL} | redirect uri: ${GOOGLE_CALLBACK_URL}`);
+      // `token_failed` = our server could not finish the exchange (network, TLS
+      // interception, wrong client or unlisted redirect URI); `denied` = the
+      // farmer cancelled on Google's consent screen.
+      const kind = err ? "google_token_failed" : "google_denied";
+      return res.redirect(`${CLIENT_ORIGIN}/login?error=${kind}&reason=${encodeURIComponent(String(reason).slice(0, 180))}`);
     }
 
-    if (fullName) user.fullName = fullName;
-    if (whatsappNumber) user.whatsappNumber = whatsappNumber;
-    if (city) user.city = city;
-    if (landSize !== undefined) user.landSize = landSize;
-    if (crops && Array.isArray(crops)) user.crops = crops;
-    user.isProfileComplete = true;
-
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      user: {
-        _id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-        image: user.image,
-        fullName: user.fullName,
-        whatsappNumber: user.whatsappNumber,
-        city: user.city,
-        landSize: user.landSize,
-        crops: user.crops,
-        isProfileComplete: user.isProfileComplete
-      }
-    });
-  } catch (error) {
-    console.error("Error updating user profile:", error);
-    res.status(500).json({ message: "Error updating user profile", error: error.message });
-  }
+    try {
+      const token = signToken({ userId: user._id, role: user.role || "farmer" });
+      // `via=google` tells the SPA that this farmer already owns an address and
+      // has no local password, so the profile form must not ask for either.
+      const target = user.isProfileComplete ? "/dashboard" : "/complete-profile?via=google";
+      return res.redirect(`${CLIENT_ORIGIN}${target}#pw_token=${token}`);
+    } catch (tokenErr) {
+      console.error(`[google-oauth] signed in but the JWT could not be issued: ${tokenErr.message}`);
+      // The session cookie is still valid, so send them to the app anyway.
+      return res.redirect(`${CLIENT_ORIGIN}/complete-profile?via=google`);
+    }
+  })(req, res, next);
 });
+
+// Kept for the many existing client call sites - now understands BOTH the
+// legacy Passport session and a bearer token.
+app.get("/login/sucess", optionalAuth, async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "User not authenticated" });
+  }
+
+  const fullUser = await userdb.findById(req.user._id || req.user.id).lean();
+  if (!fullUser) {
+    return res.status(401).json({ success: false, message: "User not authenticated" });
+  }
+
+  res.status(200).json({
+    message: "Login successful",
+    user: {
+      ...publicProfile(fullUser),
+      googleId: fullUser.googleId,
+      badges: fullUser.badges,
+      badgeProgress: fullUser.badgeProgress,
+      predictions: fullUser.predictions,
+    },
+  });
+});
+
+// GET User Profile -> handled by routes/userRoutes.js (/api/user/profile)
+
 // ========================================================
 // ALIBABA CLOUD DASHSCOPE & QWEN COPILOT API
 // ========================================================
@@ -954,9 +1055,19 @@ app.post("/qwen-chat", (req, res, next) => {
 
 
 app.get("/logout", (req, res, next) => {
+  const signedOutUrl = `${CLIENT_ORIGIN}/?signedOut=1`;
+
+  // JWT-only callers have no Passport session to end - just send them home.
+  if (typeof req.logout !== "function" || !req.session) {
+    return res.redirect(signedOutUrl);
+  }
+
   req.logout(function (err) {
     if (err) { return next(err); }
-    res.redirect("http://localhost:3000");
+    req.session.destroy(() => {
+      res.clearCookie("connect.sid");
+      res.redirect(signedOutUrl);
+    });
   });
 });
 ////////////////////////////////////////
@@ -988,7 +1099,7 @@ app.get("/logout", (req, res, next) => {
 
 app.get("/api/user/badges", isAuthenticated, async (req, res) => {
   try {
-    const user = await userdb.findOne({ googleId: req.user.googleId });
+    const user = await userdb.findById(req.user._id || req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const total = user.predictions.length;
@@ -1050,7 +1161,7 @@ app.post("/api/user/mark-care", isAuthenticated, async (req, res) => {
   const { className, routineType } = req.body;
 
   try {
-    const user = await userdb.findOne({ googleId: req.user.googleId });
+    const user = await userdb.findById(req.user._id || req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const prediction = user.predictions.find(p => p.className === className);
@@ -1106,7 +1217,7 @@ app.post("/api/user/mark-care", isAuthenticated, async (req, res) => {
 // Add this to your API routes
 app.get("/api/user/plant-progress", isAuthenticated, async (req, res) => {
   try {
-    const user = await userdb.findOne({ googleId: req.user.googleId });
+    const user = await userdb.findById(req.user._id || req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const plantProgress = user.predictions.map(prediction => ({
@@ -1127,25 +1238,8 @@ app.get("/api/user/plant-progress", isAuthenticated, async (req, res) => {
 });
 
 
-app.get("/api/user/badges", isAuthenticated, async (req, res) => {
-  try {
-    const user = await userdb.findOne({ googleId: req.user.googleId });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const total = user.predictions.length;
-    const completed = user.predictions.filter(p => p.badgeEarned).length;
-    const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
-
-    res.status(200).json({
-      progress,
-      badges: user.badges || [],
-    });
-  } catch (error) {
-    console.error("Error fetching badge progress:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-});
-
+// NOTE: a second, unreachable duplicate of /api/user/badges used to live here;
+// it has been removed so there is exactly one implementation.
 ////////////////////////////////////////
 
 // ============ CRON JOB ============
@@ -1283,4 +1377,7 @@ app.use('/api', router);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // Google Cloud Console -> APIs & Services -> Credentials -> OAuth 2.0 Client
+  // -> "Authorized redirect URIs" must contain exactly the URI printed below.
+  console.log(`[google-oauth] redirect uri to authorise in Google Cloud Console: ${GOOGLE_CALLBACK_URL}`);
 });

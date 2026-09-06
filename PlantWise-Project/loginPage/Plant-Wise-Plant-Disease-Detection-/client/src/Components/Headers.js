@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import './header.css';
-import { NavLink } from 'react-router-dom';
-import axios from 'axios';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { FaLeaf, FaBars, FaTimes } from 'react-icons/fa';
 import { FiSearch, FiBell, FiGrid, FiUser, FiLogOut, FiSettings } from 'react-icons/fi';
+import { fetchSession, logout as logoutService } from '../Services/authService';
+import { AUTH_CHANGE_EVENT, getCachedProfile } from '../Services/authStorage';
 
 const Headers = () => {
+    const navigate = useNavigate();
     const [userdata, setUserdata] = useState({});
     const [imgError, setImgError] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -18,18 +20,32 @@ const Headers = () => {
 
     const notifRef = useRef(null);
     const userMenuRef = useRef(null);
+    const probingRef = useRef(false);
+    const requeueRef = useRef(false);
 
+    // Resolves EITHER a bearer JWT (register/login) or a Google OAuth cookie.
+    // Sign-in fires several auth events in a row (token + profile cache), so
+    // overlapping requests are coalesced into one probe plus at most one retry.
     const getUser = async () => {
-        try {
-            const response = await axios.get('http://localhost:6005/login/sucess', { withCredentials: true });
-            setUserdata(response.data.user || {});
-        } catch (error) {
-            console.log('error', error);
+        if (probingRef.current) {
+            requeueRef.current = true;
+            return;
         }
+        probingRef.current = true;
+        do {
+            requeueRef.current = false;
+            const { isAuthenticated, user } = await fetchSession();
+            setImgError(false);
+            setUserdata(isAuthenticated && user ? user : {});
+        } while (requeueRef.current);
+        probingRef.current = false;
     };
 
-    const logout = () => {
-        window.open('http://localhost:6005/logout', '_self');
+    const logout = async () => {
+        setMenuOpen(false);
+        setUserMenuOpen(false);
+        await logoutService();
+        navigate('/');
     };
 
     // Load Profile and handle storage changes
@@ -37,19 +53,19 @@ const Headers = () => {
         getUser();
 
         const loadProfile = () => {
-            const saved = localStorage.getItem('plantwise_user_profile');
-            if (saved) {
-                try {
-                    setUserProfile(JSON.parse(saved));
-                } catch (e) {}
-            } else {
-                setUserProfile(null);
-            }
+            const saved = getCachedProfile();
+            setUserProfile(saved || null);
         };
 
         loadProfile();
+
+        // `storage` covers other tabs; AUTH_CHANGE_EVENT covers this one.
         window.addEventListener('storage', loadProfile);
-        return () => window.removeEventListener('storage', loadProfile);
+        window.addEventListener(AUTH_CHANGE_EVENT, getUser);
+        return () => {
+            window.removeEventListener('storage', loadProfile);
+            window.removeEventListener(AUTH_CHANGE_EVENT, getUser);
+        };
     }, []);
 
     // Click Outside to Close Notif & User Menu Popovers
@@ -150,8 +166,8 @@ const Headers = () => {
                     <li><NavLink to="/outbreak-radar" onClick={() => setMenuOpen(false)}>Outbreak Radar</NavLink></li>
                     <li><NavLink to="/saved-plants" onClick={() => setMenuOpen(false)}>Saved Plants</NavLink></li>
                     <li><NavLink to="/social-media" onClick={() => setMenuOpen(false)}>Community</NavLink></li>
-                    <li><NavLink to="/badge-progress" onClick={() => setMenuOpen(false)}>Badges</NavLink></li>
-                    <li><NavLink to="/ar" onClick={() => setMenuOpen(false)}>3D Gallery</NavLink></li>
+                    {/* <li><NavLink to="/badge-progress" onClick={() => setMenuOpen(false)}>Badges</NavLink></li>
+                    <li><NavLink to="/ar" onClick={() => setMenuOpen(false)}>3D Gallery</NavLink></li> */}
                 </ul>
 
                 <div className="nav-actions">
@@ -204,7 +220,7 @@ const Headers = () => {
                         )}
                     </div>
 
-                    <button className="icon-btn accent-icon" title="Quick Tools"><FiGrid /></button>
+                    {/* <button className="icon-btn accent-icon" title="Quick Tools"><FiGrid /></button> */}
 
                     {/* USER PROFILE AVATAR WITH CLICKABLE DROPDOWN MENU */}
                     {Object.keys(userdata).length > 0 ? (

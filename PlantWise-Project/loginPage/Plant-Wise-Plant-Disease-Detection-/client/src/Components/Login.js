@@ -1,14 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FaLeaf, FaSeedling, FaShieldAlt } from 'react-icons/fa';
 import { FiUser, FiLock, FiAperture } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
+import { loginUser, getAuthError } from '../Services/authService';
+import { useNotification } from './NotificationContext';
 import './login.css';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const notify = useNotification();
+  const [searchParams] = useSearchParams();
+  const googleReportedRef = useRef(false);
+
+  // A Google attempt that failed comes back as /login?error=...&reason=...
+  // (the server puts the technical cause in `reason`; it goes to the console so
+  // the farmer only sees a readable message).
+  useEffect(() => {
+    const code = searchParams.get('error');
+    if (!code || googleReportedRef.current) return;
+    googleReportedRef.current = true;
+
+    const reason = searchParams.get('reason');
+    if (reason) console.error('[google-oauth]', reason);
+
+    notify.error(
+      code === 'google_denied'
+        ? 'Google sign-in was cancelled.'
+        : 'Google sign-in could not be completed. Please sign in with your email, or check the server console for the reason.'
+    );
+    // Clear the query so a refresh does not repeat the message.
+    navigate('/login', { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Same two inputs as before - only wired up now, nothing re-styled.
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const data = await loginUser({ identifier, password });
+      // A farmer who never finished onboarding lands on the profile form.
+      navigate(data.requiresProfileCompletion ? '/complete-profile' : '/dashboard');
+    } catch (error) {
+      const { message } = getAuthError(error);
+      notify.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const loginwithgoogle = () => {
-    window.open('http://localhost:6005/auth/google/callback', '_self');
+    // /auth/google is the entry point; /auth/google/callback is Google's return
+    // route and answers 400 when opened directly.
+    window.open('http://localhost:6005/auth/google', '_self');
   };
 
   return (
@@ -86,15 +138,29 @@ const Login = () => {
             <p>Sign in to access your farm advisory dashboard</p>
           </div>
 
-          <form className="login-form" onSubmit={(e) => e.preventDefault()}>
+          <form className="login-form" onSubmit={handleLogin}>
             <div className="input-group">
               <FiUser className="input-icon" />
-              <input type="text" placeholder="Username or Email" required />
+              <input
+                type="text"
+                placeholder="WhatsApp no. or Email"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                autoComplete="username"
+                required
+              />
             </div>
 
             <div className="input-group">
               <FiLock className="input-icon" />
-              <input type="password" placeholder="Password" required />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
             </div>
 
             <button type="submit" className="login-submit-btn">

@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { registerUser } from '../Services/authService';
+import { getStoredToken } from '../Services/authStorage';
+import { useNotification } from './NotificationContext';
 import { FaCheckCircle, FaUserCheck, FaLock } from 'react-icons/fa';
-import { FiUser, FiPhone, FiMapPin, FiLayers, FiCheck } from 'react-icons/fi';
+import { FiUser, FiPhone, FiMapPin, FiLayers, FiCheck, FiMail } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AVAILABLE_CROPS = [
@@ -32,14 +35,31 @@ const SINDH_DISTRICTS = [
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
+  const notify = useNotification();
 
   // Form State
   const [formData, setFormData] = useState({
     fullName: '',
+    email: '',
     whatsappNumber: '',
     city: 'Khairpur',
     landSize: ''
   });
+
+  // Sign-up credentials (kept out of the cached profile on purpose)
+  const [regPassword, setRegPassword] = useState('');
+  // true once the API recognises us (bearer token or Google session)
+  const [isAuthed, setIsAuthed] = useState(() => Boolean(getStoredToken()));
+  // 'google' when the visitor arrived through Google Sign-In. The OAuth callback
+  // adds ?via=google, so the very first render already knows and the sign-up
+  // fields can never flash before the profile request comes back.
+  const [provider, setProvider] = useState(() => (
+    new URLSearchParams(window.location.search).get('via') === 'google' ? 'google' : ''
+  ));
+  const isGoogleUser = provider === 'google';
+  // Email + password belong to brand new local accounts only. A Google farmer
+  // already owns a verified address and has no local password to set.
+  const needsCredentials = !isAuthed && !isGoogleUser;
 
   // Multi-select Crops State
   const [selectedCrops, setSelectedCrops] = useState(['Cotton']);
@@ -86,6 +106,8 @@ const CompleteProfile = () => {
           const res = await axios.get('http://localhost:6005/api/user/profile', { withCredentials: true });
           if (res.data && res.data.user) {
             existingUser = res.data.user;
+            setIsAuthed(true); // the API identified us - this is an edit, not a sign-up
+            if (existingUser.provider) setProvider(existingUser.provider);
           }
         } catch (backendErr) {
           // Fallback to /login/sucess
@@ -93,6 +115,8 @@ const CompleteProfile = () => {
             const authRes = await axios.get('http://localhost:6005/login/sucess', { withCredentials: true });
             if (authRes.data && authRes.data.user) {
               existingUser = authRes.data.user;
+              setIsAuthed(true);
+              if (existingUser.provider) setProvider(existingUser.provider);
             }
           } catch (e) {}
         }
@@ -117,6 +141,7 @@ const CompleteProfile = () => {
 
           setFormData({
             fullName: name,
+            email: existingUser.email || '',
             whatsappNumber: phone,
             city: city,
             landSize: land
@@ -253,16 +278,42 @@ const CompleteProfile = () => {
       isWhatsappVerified: true
     };
 
-    // 1. Save to backend database via PUT /api/user/profile
+    // 1. Save to backend database - register a new account when nobody is
+    //    signed in, otherwise update the profile (the axios interceptor attaches
+    //    'Authorization: Bearer <token>' to both calls automatically).
     try {
-      await axios.put('http://localhost:6005/api/user/profile', {
-        fullName: formData.fullName,
-        whatsappNumber: formattedNumber,
-        city: formData.city,
-        landSize: formData.landSize,
-        crops: selectedCrops,
-      }, { withCredentials: true });
+      if (isAuthed || isGoogleUser || getStoredToken()) {
+        // Google farmers land here too: they authenticate with the OAuth session
+        // cookie (or the JWT handed over in the URL fragment), never with a
+        // password created on this form.
+        await axios.put('http://localhost:6005/api/user/profile', {
+          fullName: formData.fullName,
+          whatsappNumber: formattedNumber,
+          city: formData.city,
+          landSize: formData.landSize,
+          crops: selectedCrops,
+        }, { withCredentials: true });
+      } else {
+        // One step: create the account, store the farm details, receive the JWT.
+        await registerUser({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: regPassword,
+          whatsappNumber: formattedNumber,
+          city: formData.city,
+          landSize: formData.landSize,
+          crops: selectedCrops,
+          mainCrop: selectedCrops[0] || 'Cotton',
+          isWhatsappVerified: true,
+        });
+      }
     } catch (saveErr) {
+      if (!getStoredToken()) {
+        // Sign-up failed, so nothing exists server-side - say so instead of
+        // quietly "saving" a profile nobody can come back to.
+        notify.error(saveErr.response?.data?.message || 'Could not create your account. Please check the details and try again.');
+        return;
+      }
       console.warn("Could not save to backend database, saving locally:", saveErr.message);
     }
 
@@ -419,6 +470,100 @@ const CompleteProfile = () => {
               />
             </div>
           </div>
+
+          {/* SIGN-UP CREDENTIALS - only shown while creating an account */}
+          {needsCredentials && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+              {/* FIELD 1b: EMAIL */}
+              <div>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.88rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+                  <span>Email Address</span>
+                  <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.1rem', color: '#059669' }}>ای میل ایڈریس</span>
+                </label>
+
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <FiMail style={{ position: 'absolute', left: '16px', color: '#059669', fontSize: '1.2rem' }} />
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="e.g. farmer@gmail.com"
+                    style={{
+                      width: '100%',
+                      height: '52px',
+                      borderRadius: '14px',
+                      border: '1.5px solid #e2e8f0',
+                      paddingLeft: '48px',
+                      paddingRight: '16px',
+                      fontSize: '0.95rem',
+                      color: '#0f172a',
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      fontFamily: "'DM Sans', sans-serif"
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#059669';
+                      e.target.style.background = '#ffffff';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(5, 150, 105, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e2e8f0';
+                      e.target.style.background = '#f8fafc';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* FIELD 1c: PASSWORD */}
+              <div>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.88rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+                  <span>Password</span>
+                  <span style={{ fontFamily: "'Jameel Noori Nastaleeq', 'JameelNooriNastaliq', 'Noto Nastaliq Urdu', serif", fontSize: '1.1rem', color: '#059669' }}>پاس ورڈ</span>
+                </label>
+
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <FaLock style={{ position: 'absolute', left: '16px', color: '#059669', fontSize: '1rem' }} />
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Minimum 6 characters"
+                    style={{
+                      width: '100%',
+                      height: '52px',
+                      borderRadius: '14px',
+                      border: '1.5px solid #e2e8f0',
+                      paddingLeft: '48px',
+                      paddingRight: '16px',
+                      fontSize: '0.95rem',
+                      color: '#0f172a',
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      fontFamily: "'DM Sans', sans-serif"
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#059669';
+                      e.target.style.background = '#ffffff';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(5, 150, 105, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e2e8f0';
+                      e.target.style.background = '#f8fafc';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* FIELD 2: WHATSAPP NUMBER WITH INLINE OTP VERIFICATION */}
           <div>
