@@ -341,6 +341,7 @@ app.post("/save-prediction", isAuthenticated, async (req, res) => {
 
     const prediction = {
       className,
+      imgUrl: req.body.imgUrl || req.body.imagePath || "",
       morningCareRoutine,
       nightCareRoutine,
       recommendation,
