@@ -14,7 +14,7 @@
   position: absolute;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.88;
+  opacity: 0.65;
   mix-blend-mode: multiply;
   width: 360px;
   height: 360px;
@@ -22,30 +22,31 @@
   border-radius: 50%;
   filter: contrast(1.05);
   transition: opacity 0.5s ease;
+  
 }
 
 .sp-bg-decor.left-top {
-  top: 10px;
-  left: -60px;
-  transform: rotate(-15deg);
+  top: 2px;
+  left: -140px;
+  transform: rotate(-90deg);
 }
 
 .sp-bg-decor.left-bottom {
-  bottom: 80px;
-  left: -70px;
-  transform: rotate(30deg);
+  bottom: 30px;
+  left: -120px;
+  transform: rotate(170deg);
 }
 
 .sp-bg-decor.right-top {
-  top: 10px;
-  right: -60px;
-  transform: rotate(15deg);
+  top: 60px;
+  right: -120px;
+  transform: rotate(-90deg);
 }
 
 .sp-bg-decor.right-bottom {
-  bottom: 80px;
-  right: -70px;
-  transform: rotate(-25deg);
+  bottom: 0px;
+  right: -120px;
+  transform: rotate(-110deg);
 }
 
 @media (max-width: 960px) {
@@ -153,12 +154,14 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .sp-card-info-left {
   display: flex;
   align-items: center;
   gap: 10px;
+  overflow: hidden;
 }
 
 .sp-crop-thumb {
