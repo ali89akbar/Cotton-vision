@@ -66,6 +66,17 @@ const userSchema = new mongoose.Schema({
     imageDetections: { type: Number, default: 0 },
     postsCreated: { type: Number, default: 0 },
   },
+
+  // --- Weather alert notifications ---
+  notifications: {
+    weatherAlerts: { type: Boolean, default: true },
+    lastWeatherAlert: {
+      riskType: String,
+      affectedCrops: [String],
+      city: String,
+      sentAt: Date,
+    },
+  },
 }, { timestamps: true });
 
 // Never leak the hash, even when a document is serialized by accident.

@@ -154,11 +154,85 @@ export const useWeather = () => {
   return ctx;
 };
 
+const SELECTED_CITY_KEY = 'plantwise_selected_city';
+const PROFILE_KEY = 'plantwise_user_profile';
+
+const getProfileUserId = () => {
+  try {
+    const profile = localStorage.getItem(PROFILE_KEY);
+    if (profile) return JSON.parse(profile)._id || null;
+  } catch (e) {
+    // ignore corrupt cache
+  }
+  return null;
+};
+
+const getInitialCity = () => {
+  try {
+    const profile = localStorage.getItem(PROFILE_KEY);
+    if (!profile) return "Khairpur";
+
+    const parsed = JSON.parse(profile);
+
+    const selected = localStorage.getItem(SELECTED_CITY_KEY);
+    if (selected) {
+      const entry = JSON.parse(selected);
+      if (entry.userId === parsed._id && entry.city) return entry.city;
+    }
+
+    if (parsed.city) return parsed.city;
+  } catch (e) {
+    // ignore corrupt or missing cache
+  }
+  return "Khairpur";
+};
+
 export const WeatherProvider = ({ children }) => {
-  const [selectedCityName, setSelectedCityName] = useState("Khairpur");
+  const [selectedCityName, setSelectedCityNameState] = useState(getInitialCity);
   const [liveWeather, setLiveWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherSource, setWeatherSource] = useState("OpenWeatherMap Live API");
+
+  // Persist an explicit city change from the UI, and keep the weather context
+  // in sync with the farmer's profile city after login / profile completion.
+  const setSelectedCityName = (city) => {
+    setSelectedCityNameState(city);
+    const userId = getProfileUserId();
+    try {
+      localStorage.setItem(SELECTED_CITY_KEY, JSON.stringify({ city, userId }));
+    } catch (e) {
+      // ignore private-mode / quota errors
+    }
+  };
+
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key && e.key !== SELECTED_CITY_KEY && e.key !== PROFILE_KEY) return;
+
+      const profile = localStorage.getItem(PROFILE_KEY);
+      if (!profile) return;
+
+      try {
+        const parsed = JSON.parse(profile);
+
+        const selected = localStorage.getItem(SELECTED_CITY_KEY);
+        if (selected) {
+          const entry = JSON.parse(selected);
+          if (entry.userId === parsed._id && entry.city) {
+            setSelectedCityNameState(entry.city);
+            return;
+          }
+        }
+
+        if (parsed.city) setSelectedCityNameState(parsed.city);
+      } catch (err) {
+        // ignore corrupt cache
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const activeCity = useMemo(() => {
     return (
