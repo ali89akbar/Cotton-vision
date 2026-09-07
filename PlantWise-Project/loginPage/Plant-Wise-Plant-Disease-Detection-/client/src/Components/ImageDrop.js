@@ -605,14 +605,27 @@ export const ImageUpload = () => {
     }
   };
 
+  const getBase64Image = (file) => {
+    return new Promise((resolve) => {
+      if (!file) return resolve("");
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => resolve("");
+    });
+  };
+
   const saveToMongoDB = async () => {
     if (!data || data.status !== "SUCCESS") return;
     setIsSaving(true);
 
     try {
       const weatherInfo = data?.weather_safety_advisory || data?.weather_safety_khairpur;
+      const base64Img = selectedFile ? await getBase64Image(selectedFile) : "";
+
       const payload = {
         className: data.diagnosis.predicted_class,
+        imgUrl: base64Img || data.imageUrl || "",
         recommendation: data.qwen_advisory?.recommendation || "",
         chemicalRecommendation: data.actionable_decision?.chemical_recommendation || "",
         dosagePerAcre: data.actionable_decision?.dosage_per_acre || "",

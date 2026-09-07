@@ -1,282 +1,408 @@
-.sp-page-container {
-  max-width: 1240px;
+/* ═══════════════════════════════════════════════════════════════════
+   PlantWise – Saved Plants Modern Grid & Decorative Background
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sp-bg-wrapper {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0fdf4 0%, #e6f7ef 50%, #f0fdf4 100%);
+  overflow: hidden;
+}
+
+/* Generated Background Decorative Images (Clean Isolated Images + Multiply Blend Mode) */
+.sp-bg-decor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.88;
+  mix-blend-mode: multiply;
+  width: 360px;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 50%;
+  filter: contrast(1.05);
+  transition: opacity 0.5s ease;
+}
+
+.sp-bg-decor.left-top {
+  top: 10px;
+  left: -60px;
+  transform: rotate(-15deg);
+}
+
+.sp-bg-decor.left-bottom {
+  bottom: 80px;
+  left: -70px;
+  transform: rotate(30deg);
+}
+
+.sp-bg-decor.right-top {
+  top: 10px;
+  right: -60px;
+  transform: rotate(15deg);
+}
+
+.sp-bg-decor.right-bottom {
+  bottom: 80px;
+  right: -70px;
+  transform: rotate(-25deg);
+}
+
+@media (max-width: 960px) {
+  .sp-bg-decor {
+    width: 220px;
+    height: 220px;
+    opacity: 0.5;
+  }
+}
+
+.sp-main-container {
+  max-width: 1380px;
   margin: 0 auto;
-  padding: 8rem 1.5rem 4rem 1.5rem;
-}
-
-.sp-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
-.sp-title {
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 2.25rem;
-  font-weight: 800;
-  color: #064e3b;
-  margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, #059669 0%, #064e3b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.sp-subtitle {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 1.05rem;
-  color: #475569;
-  max-width: 680px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-.sp-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-/* 1. Sleek & Minimal Card Container */
-.sp-card {
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 2rem;
-  padding: 1.75rem 2rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  padding: 7.5rem 1.5rem 4rem 1.5rem;
   text-align: left;
   position: relative;
+  z-index: 1;
 }
 
-.sp-card:hover {
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
-  transform: translateY(-4px);
-  border-color: #e2e8f0;
+/* Page Header */
+.sp-header-area {
+  margin-bottom: 2rem;
+  text-align: left;
 }
 
-/* 2. Header Section (Typography & Badges) */
-.sp-card-header {
+.sp-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.sp-header-leaf-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(5, 150, 105, 0.15);
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+}
+
+.sp-page-heading {
+  font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #064e3b;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.sp-page-subtext {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  color: #475569;
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.sp-badge-highlight {
+  color: #047857;
+  font-weight: 700;
+}
+
+/* Responsive Grid Layout */
+.sp-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Plant Card */
+.sp-plant-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  padding: 1.35rem 1.25rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.9rem;
+  text-align: left;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.sp-plant-card:hover {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+  transform: translateY(-3px);
+}
+
+/* Card Top Section */
+.sp-card-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 8px;
 }
 
-.sp-header-left {
+.sp-card-info-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sp-crop-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  background: #f0fdf4;
+}
+
+.sp-disease-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-.sp-crop-badge {
-  font-size: 0.72rem;
+.sp-crop-label {
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #15803d;
-  background: #f0fdf4;
-  padding: 4px 12px;
-  border-radius: 50px;
-  display: inline-block;
-  margin-bottom: 0.5rem;
+  color: #94a3b8;
+  margin-bottom: 2px;
+  line-height: 1;
 }
 
 .sp-disease-title {
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.98rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
-  text-transform: capitalize;
-  letter-spacing: -0.3px;
+  line-height: 1.25;
 }
 
-.sp-location-badge {
-  font-size: 0.82rem;
-  color: #64748b;
-  background: #f8fafc;
-  padding: 4px 12px;
+/* Status Badge */
+.sp-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
   border-radius: 50px;
-  border: 1px solid #f1f5f9;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 600;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
-/* 3. Remedy Highlight Box */
+.sp-status-badge.completed {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.sp-status-badge.pending {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #d1fae5;
+}
+
+.sp-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+/* Chemical Spray Highlight Box */
 .sp-remedy-box {
-  background: #f8fafc;
-  border-radius: 1rem;
-  padding: 1rem 1.25rem;
-  border: 1px solid #f1f5f9;
+  background: #f0fdf4;
+  border: 1px solid #d1fae5;
+  border-radius: 10px;
+  padding: 8px 11px;
+  font-size: 11px;
+  text-align: left;
+}
+
+.sp-remedy-hdr {
+  font-weight: 800;
+  color: #166534;
+  margin-bottom: 2px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 4px;
 }
 
-.sp-remedy-label {
-  font-size: 0.72rem;
+.sp-remedy-txt {
+  color: #14532d;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Checklist Section */
+.sp-checklist-container {
+  background: #ebf7f0;
+  border: 1px solid rgba(209, 250, 229, 0.9);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-checklist-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #15803d;
+  color: #064e3b;
+}
+
+.sp-checklist-hdr-left {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.sp-remedy-name {
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 700;
-  color: #166534;
-  font-size: 0.98rem;
-  line-height: 1.4;
-}
-
-/* 4. Modern Checklist & Progress */
-.sp-checklist-box {
-  background: rgba(248, 250, 252, 0.7);
-  border-radius: 1.25rem;
-  padding: 1.25rem;
-  border: 1px solid #f1f5f9;
+.sp-checklist-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
-
-.sp-checklist-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.sp-checklist-badge {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #047857;
-  background: #d1fae5;
-  padding: 3px 10px;
-  border-radius: 50px;
-}
-
-.sp-checklist-badge.locked {
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.sp-checklist-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 0.25rem;
-  max-height: 220px;
+  gap: 6px;
+  max-height: 200px;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 4px;
 }
 
-.sp-checklist-items::-webkit-scrollbar {
-  width: 5px;
+.sp-checklist-list::-webkit-scrollbar {
+  width: 4px;
 }
 
-.sp-checklist-items::-webkit-scrollbar-track {
+.sp-checklist-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.sp-checklist-items::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+.sp-checklist-list::-webkit-scrollbar-thumb {
+  background: #a7f3d0;
   border-radius: 10px;
 }
 
-.sp-checklist-items::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.sp-checklist-item {
+.sp-checklist-row {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.35;
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
-  text-align: left;
+  background: rgba(255, 255, 255, 0.9);
+  color: #334155;
+  border: 1px solid #f1f5f9;
 }
 
-.sp-checklist-item:hover {
+.sp-checklist-row:hover {
+  background: #ffffff;
   border-color: #cbd5e1;
 }
 
-.sp-checklist-item.checked {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+.sp-checklist-row.checked {
+  background: #d8f3e5;
+  color: #064e3b;
+  font-weight: 600;
+  border-color: #a7f3d0;
 }
 
-.sp-checklist-item.locked {
+.sp-checklist-row.locked {
   cursor: not-allowed;
   opacity: 0.9;
 }
 
-.sp-checkbox {
-  width: 20px;
-  height: 20px;
-  accent-color: #10b981;
-  cursor: pointer;
-  border-radius: 6px;
-  margin-top: 2px;
+.sp-chk-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-right: 6px;
+}
+
+.sp-chk-box {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.15s ease;
 }
 
-.sp-item-text {
-  font-size: 0.86rem;
-  font-weight: 500;
-  color: #334155;
-  line-height: 1.45;
-  font-family: 'DM Sans', sans-serif;
+.sp-chk-box.unchecked {
+  border: 2px solid #34d399;
+  background: #ffffff;
 }
 
-.sp-item-text.checked {
+.sp-chk-box.checked {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+}
+
+.sp-chk-text.checked {
   text-decoration: line-through;
-  color: #166534;
-  font-weight: 600;
+  color: #065f46;
 }
 
+.sp-chevron {
+  color: #34d399;
+  font-size: 12px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* Progress Bar Section */
 .sp-progress-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  margin-top: 2px;
 }
 
-.sp-progress-label {
+.sp-progress-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
+  font-size: 10px;
   font-weight: 800;
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
 }
 
 .sp-progress-val {
   color: #0f172a;
+  font-weight: 900;
 }
 
 .sp-progress-track {
   width: 100%;
-  height: 8px;
+  height: 6px;
   background: #f1f5f9;
   border-radius: 50px;
   overflow: hidden;
@@ -286,58 +412,88 @@
   height: 100%;
   background: #10b981;
   border-radius: 50px;
-  transition: width 0.5s ease;
+  transition: width 0.4s ease;
 }
 
-.sp-badge-earned {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #92400e;
-  padding: 10px 14px;
-  border-radius: 1rem;
-  font-size: 0.82rem;
-  font-weight: 800;
+/* Badge Banner Section */
+.sp-badge-banner {
+  border-radius: 10px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 11px;
+  text-align: left;
 }
 
-.sp-card-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 4px;
+.sp-badge-banner.earned {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-weight: 700;
 }
 
-.sp-date {
-  font-size: 0.78rem;
+.sp-badge-banner.locked {
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
   color: #94a3b8;
   font-weight: 500;
 }
 
-/* 5. Call to Action Button */
-.sp-btn-action {
-  width: 100%;
-  background: #0f172a;
+.sp-trophy-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #fef3c7;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.sp-lock-icon {
+  font-size: 12px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* Card Footer */
+.sp-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+}
+
+.sp-date-text {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.sp-btn-routine {
+  background: #0b3b24;
   color: #ffffff;
+  font-size: 11px;
   font-weight: 700;
-  padding: 12px 24px;
+  padding: 6px 16px;
   border-radius: 50px;
   border: none;
   cursor: pointer;
-  font-size: 0.88rem;
-  transition: all 0.25s ease;
-  display: flex;
-  justify-content: center;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  transition: all 0.2s ease;
   font-family: 'DM Sans', sans-serif;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 2px 6px rgba(11, 59, 36, 0.2);
 }
 
-.sp-btn-action:hover {
-  background: #16a34a;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.25);
+.sp-btn-routine:hover {
+  background: #064e3b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 78, 59, 0.3);
 }
