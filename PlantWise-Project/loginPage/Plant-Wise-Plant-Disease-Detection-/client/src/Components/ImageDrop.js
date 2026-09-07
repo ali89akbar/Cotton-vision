@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNotification } from './NotificationContext';
 import { makeStyles } from "@material-ui/core/styles";
 import {
@@ -508,29 +508,81 @@ export const ImageUpload = () => {
     }
   };
 
+  // Audio Player Refs & Tracking to Prevent Overlapping Audio
+  const audioRef = useRef(null);
+  const ttsAbortControllerRef = useRef(null);
+  const audioSessionIdRef = useRef(0);
+
+  const stopAllAudio = () => {
+    // 1. Abort ongoing network request for TTS if fetching
+    if (ttsAbortControllerRef.current) {
+      try {
+        ttsAbortControllerRef.current.abort();
+      } catch (e) {}
+      ttsAbortControllerRef.current = null;
+    }
+
+    // 2. Pause and reset active Audio ref
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = "";
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
+      } catch (e) {}
+      audioRef.current = null;
+    }
+
+    // 3. Pause and reset window.currentAudioElement if set
+    if (window.currentAudioElement) {
+      try {
+        window.currentAudioElement.pause();
+        window.currentAudioElement.currentTime = 0;
+        window.currentAudioElement.src = "";
+        window.currentAudioElement.onended = null;
+        window.currentAudioElement.onerror = null;
+      } catch (e) {}
+      window.currentAudioElement = null;
+    }
+
+    // 4. Cancel SpeechSynthesis if active
+    if (window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+
+    setIsPlayingAudio(false);
+  };
+
+  // Clean up audio on component unmount
+  useEffect(() => {
+    return () => {
+      stopAllAudio();
+    };
+  }, []);
+
   // Guaranteed Multi-Lingual MP3 Audio Player for Illiterate Farmers
   const toggleAudioAdvisory = async () => {
     if (!data?.qwen_advisory?.recommendation) return;
 
     if (isPlayingAudio) {
-      if (window.currentAudioElement) {
-        try {
-          window.currentAudioElement.pause();
-          window.currentAudioElement.currentTime = 0;
-        } catch (e) {}
-        window.currentAudioElement = null;
-      }
-      if (window.speechSynthesis) {
-        try {
-          window.speechSynthesis.cancel();
-        } catch (e) {}
-      }
-      setIsPlayingAudio(false);
+      stopAllAudio();
       return;
     }
 
+    // Stop any existing audio or fetches before starting a new session
+    stopAllAudio();
+
+    const currentSessionId = Date.now();
+    audioSessionIdRef.current = currentSessionId;
+
     const textToSpeak = data.qwen_advisory.recommendation;
     setIsPlayingAudio(true);
+
+    const controller = new AbortController();
+    ttsAbortControllerRef.current = controller;
 
     try {
       // 100% Guaranteed MP3 Audio Stream from Backend /tts API
@@ -538,45 +590,73 @@ export const ImageUpload = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: textToSpeak, language: language }),
+        signal: controller.signal,
       });
 
       if (!response.ok) throw new Error("TTS MP3 generation failed");
 
+      if (audioSessionIdRef.current !== currentSessionId) return;
+
       const blob = await response.blob();
+
+      if (audioSessionIdRef.current !== currentSessionId) return;
+
       const audioUrl = URL.createObjectURL(blob);
       const audio = new Audio();
       audio.src = audioUrl;
+      audioRef.current = audio;
       window.currentAudioElement = audio;
 
       audio.onended = () => {
-        setIsPlayingAudio(false);
+        if (audioSessionIdRef.current === currentSessionId) {
+          setIsPlayingAudio(false);
+          audioRef.current = null;
+          window.currentAudioElement = null;
+        }
         try { URL.revokeObjectURL(audioUrl); } catch (e) {}
-        window.currentAudioElement = null;
       };
 
       audio.onerror = (e) => {
         console.warn("Audio element error:", e);
-        setIsPlayingAudio(false);
+        if (audioSessionIdRef.current === currentSessionId) {
+          setIsPlayingAudio(false);
+          audioRef.current = null;
+          window.currentAudioElement = null;
+        }
         try { URL.revokeObjectURL(audioUrl); } catch (err) {}
-        window.currentAudioElement = null;
       };
 
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
           console.warn("Audio play prevented/interrupted:", err);
-          setIsPlayingAudio(false);
+          if (audioSessionIdRef.current === currentSessionId) {
+            setIsPlayingAudio(false);
+          }
         });
       }
     } catch (error) {
+      if (error.name === "AbortError") {
+        return;
+      }
       console.warn("Backend MP3 stream failed, attempting WebSpeech fallback...", error);
+      if (audioSessionIdRef.current !== currentSessionId) return;
+
       if (window.speechSynthesis) {
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(textToSpeak);
           utterance.lang = ["ur", "sd", "pa", "skr", "ps"].includes(language) ? "ur-PK" : "en-US";
-          utterance.onend = () => setIsPlayingAudio(false);
-          utterance.onerror = () => setIsPlayingAudio(false);
+          utterance.onend = () => {
+            if (audioSessionIdRef.current === currentSessionId) {
+              setIsPlayingAudio(false);
+            }
+          };
+          utterance.onerror = () => {
+            if (audioSessionIdRef.current === currentSessionId) {
+              setIsPlayingAudio(false);
+            }
+          };
           window.speechSynthesis.speak(utterance);
         } catch (speechErr) {
           setIsPlayingAudio(false);
@@ -683,8 +763,7 @@ export const ImageUpload = () => {
   const clearData = () => {
     setData(null);
     setSelectedFile(null);
-    window.speechSynthesis?.cancel();
-    setIsPlayingAudio(false);
+    stopAllAudio();
   };
 
   useEffect(() => {

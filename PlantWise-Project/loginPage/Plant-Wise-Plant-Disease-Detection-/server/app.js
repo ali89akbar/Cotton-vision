@@ -934,13 +934,10 @@ app.post("/api/ai/chat", async (req, res) => {
       return res.status(400).json({ success: false, reply: "Prompt message is required" });
     }
 
-    const systemPrompt = `You are PlantWise AI Agronomist Copilot for farmers in Sindh, Pakistan.
-STRICT TOKEN SAVING & ULTRA-CONCISE RULES:
-- Keep your answer ULTRA-SHORT (strictly 2 to 3 short sentences or maximum 2 concise bullet points).
-- Answer ONLY the exact question asked. DO NOT mention unasked crops (e.g. do not add wheat/tomato/potato unless asked), and do not add long introductions or disclaimers.
-- NEVER use markdown asterisks (no **, no *).
-- Use simple clean bullets (•) if giving points.
-- Match the language used by the farmer (Urdu, Roman Urdu, or English).`;
+    const systemMessage = {
+      role: "system",
+      content: "You are Qwen AI Copilot, a highly specialized Precision Agronomist for the PlantWise AI platform. Your expertise is STRICTLY limited to agriculture, crop diseases (especially cotton in Sindh), pesticide formulations, chemical dosages, and microclimate/weather telemetry. \n\nCRITICAL INSTRUCTION: You are ABSOLUTELY FORBIDDEN from answering any questions outside of the agricultural domain. This includes questions about celebrities, movies, general knowledge, etc. \n\nIf a user asks an irrelevant question, you MUST completely ignore it and reply ONLY with this exact phrase: 'Main ek Agronomist Copilot hoon. Main sirf faslon ki beemariyon, pesticides, aur ziraat (agriculture) ke hawaley se sawalat ke jawabat de sakta hoon.' Do not provide any other details."
+    };
 
     let aiReply = null;
     const qwenApiKey = process.env.QWEN_API || process.env.DASHSCOPE_API_KEY;
@@ -958,7 +955,7 @@ STRICT TOKEN SAVING & ULTRA-CONCISE RULES:
           body: JSON.stringify({
             model: "qwen-plus",
             messages: [
-              { role: "system", content: systemPrompt },
+              systemMessage,
               { role: "user", content: message.trim() }
             ],
             temperature: 0.4,
@@ -984,7 +981,7 @@ STRICT TOKEN SAVING & ULTRA-CONCISE RULES:
         const groqCompletion = await groq.chat.completions.create({
           model: "qwen/qwen3.8-27b",
           messages: [
-            { role: "system", content: systemPrompt },
+            systemMessage,
             { role: "user", content: message.trim() }
           ],
           temperature: 0.4,
@@ -1006,7 +1003,7 @@ STRICT TOKEN SAVING & ULTRA-CONCISE RULES:
         const gptCompletion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [
-            { role: "system", content: systemPrompt },
+            systemMessage,
             { role: "user", content: message.trim() }
           ],
           max_tokens: 110,

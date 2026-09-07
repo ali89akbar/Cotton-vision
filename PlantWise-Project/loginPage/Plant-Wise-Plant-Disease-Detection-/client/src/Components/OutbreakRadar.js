@@ -15,7 +15,7 @@ import {
   FaUmbrella,
   FaShieldAlt,
 } from "react-icons/fa";
-import { FiSearch, FiRefreshCw } from "react-icons/fi";
+import { FiAlertTriangle, FiLayers, FiRefreshCw, FiSearch, FiShield } from 'react-icons/fi';
 import { useWeather, SINDH_OUTBREAK_DATA } from "./WeatherContext";
 
 const OutbreakRadar = () => {
@@ -223,8 +223,8 @@ const OutbreakRadar = () => {
         {/* TOP METRIC CARDS */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
           <div style={{ background: "#ffffff", borderRadius: "20px", padding: "1.25rem 1.5rem", border: "1px solid #e2e8f0", boxShadow: "0 4px 15px rgba(0,0,0,0.03)", display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "#f0fdf4", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem" }}>
-              🌾
+            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.35rem", boxShadow: "0 4px 12px rgba(5,150,105,0.15)" }}>
+              <FiLayers style={{ strokeWidth: 2.3 }} />
             </div>
             <div>
               <div style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.5rem", color: "#0f172a" }}>1,660</div>
@@ -233,8 +233,8 @@ const OutbreakRadar = () => {
           </div>
 
           <div style={{ background: "#ffffff", borderRadius: "20px", padding: "1.25rem 1.5rem", border: "1px solid #e2e8f0", boxShadow: "0 4px 15px rgba(0,0,0,0.03)", display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem" }}>
-              🚨
+            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.35rem", boxShadow: "0 4px 12px rgba(220,38,38,0.15)" }}>
+              <FiAlertTriangle style={{ strokeWidth: 2.3 }} />
             </div>
             <div>
               <div style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.5rem", color: "#dc2626" }}>3 Zones</div>
@@ -243,8 +243,8 @@ const OutbreakRadar = () => {
           </div>
 
           <div style={{ background: "#ffffff", borderRadius: "20px", padding: "1.25rem 1.5rem", border: "1px solid #e2e8f0", boxShadow: "0 4px 15px rgba(0,0,0,0.03)", display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "#f0fdf4", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem" }}>
-              🛡️
+            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "linear-gradient(135deg, #dcfce7 0%, #a7f3d0 100%)", color: "#047857", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.35rem", boxShadow: "0 4px 12px rgba(4,120,87,0.15)" }}>
+              <FiShield style={{ strokeWidth: 2.3 }} />
             </div>
             <div>
               <div style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.5rem", color: "#059669" }}>84%</div>
@@ -253,8 +253,8 @@ const OutbreakRadar = () => {
           </div>
 
           <div style={{ background: "#ffffff", borderRadius: "20px", padding: "1.25rem 1.5rem", border: "1px solid #e2e8f0", boxShadow: "0 4px 15px rgba(0,0,0,0.03)", display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "#e0f2fe", color: "#0284c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem" }}>
-              📡
+            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)", color: "#0284c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.35rem", boxShadow: "0 4px 12px rgba(2,132,199,0.15)" }}>
+              <FaSatellite />
             </div>
             <div>
               <div style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.5rem", color: "#0284c7" }}>5 Cities</div>
