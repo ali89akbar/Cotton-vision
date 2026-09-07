@@ -64,7 +64,7 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page">
+    <div className="login-page min-h-screen flex items-center justify-center">
       {/* 3D Animated Crop & Plantation Background Elements */}
       <div className="login-bg-overlay">
         {/* Floating 3D Leaves */}

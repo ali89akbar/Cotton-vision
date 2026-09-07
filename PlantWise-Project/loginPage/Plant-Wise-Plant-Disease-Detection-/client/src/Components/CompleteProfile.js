@@ -356,7 +356,7 @@ const CompleteProfile = () => {
   const isPhoneValid = formData.whatsappNumber.replace(/\D/g, '').length >= 10;
 
   return (
-    <div style={{ minHeight: '100vh', paddingTop: '8.5rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem', background: 'linear-gradient(180deg, #f0fdf4 0%, #f8fafc 50%, #e2e8f0 100%)', position: 'relative' }}>
+    <div className="min-h-screen flex flex-col justify-center items-center" style={{ minHeight: '100vh', paddingTop: '8.5rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem', background: 'linear-gradient(180deg, #f0fdf4 0%, #f8fafc 50%, #e2e8f0 100%)', position: 'relative' }}>
       
       {/* TOAST NOTIFICATION */}
       <AnimatePresence>

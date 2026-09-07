@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FiCheckCircle, FiAward, FiCheckSquare, FiSquare, FiLock } from "react-icons/fi";
+import { FiCheckCircle, FiAward, FiLock } from "react-icons/fi";
 import styled, { keyframes } from "styled-components";
 import { useNotification } from './NotificationContext';
+import './savedPlants.css';
 
 // Modern color palette inspired by nature
 const colors = {
@@ -27,9 +28,9 @@ const fadeIn = keyframes`
 `;
 
 const Container = styled.div`
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 7.5rem 1rem 3rem 1rem;
+  padding: 7.5rem 1.5rem 3.5rem 1.5rem;
   animation: ${fadeIn} 0.3s ease-out;
 `;
 
@@ -39,231 +40,23 @@ const Header = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: 2.2rem;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 2.25rem;
   color: ${colors.primaryDark};
   margin-bottom: 0.5rem;
-  font-weight: 700;
-  background: linear-gradient(to right, ${colors.primary}, ${colors.primaryDark});
+  font-weight: 800;
+  background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.1rem;
-  color: ${colors.textLight};
-  max-width: 650px;
-  margin: 0 auto;
-  line-height: 1.5;
-`;
-
-const PlantsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
-`;
-
-const PlantCard = styled.div`
-  background: ${colors.cardBg};
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  border: 1px solid ${colors.border};
-  position: relative;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-  }
-`;
-
-const PlantCardHeader = styled.div`
-  background: linear-gradient(135deg, #064e3b 0%, #059669 100%);
-  color: white;
-  padding: 1.25rem;
-  text-align: left;
-`;
-
-const CropLabel = styled.span`
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.9;
-  display: block;
-`;
-
-const DiseaseTitle = styled.h2`
-  font-size: 1.4rem;
-  font-weight: 800;
-  margin: 4px 0;
-  color: #ffffff;
-  font-family: 'Bricolage Grotesque', sans-serif;
-`;
-
-const LocationBadge = styled.span`
-  font-size: 0.82rem;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 3px 10px;
-  border-radius: 12px;
-  display: inline-block;
-  margin-top: 4px;
-`;
-
-const PlantDetails = styled.div`
-  padding: 1.5rem;
-`;
-
-const ChemicalBox = styled.div`
-  background: #ffffff;
-  border-left: 4px solid #059669;
-  border: 1px solid #e2e8f0;
-  border-left-width: 4px;
-  border-radius: 10px;
-  padding: 0.9rem;
-  margin-bottom: 1.2rem;
-`;
-
-const ChemicalTitle = styled.div`
-  font-weight: 700;
-  color: #059669;
-  margin-bottom: 0.2rem;
-  font-size: 0.85rem;
-`;
-
-const ChemicalText = styled.div`
-  font-weight: 700;
-  color: #0f172a;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-`;
-
-const ChecklistSection = styled.div`
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 1.25rem;
-  margin-bottom: 1.25rem;
-`;
-
-const ChecklistHeader = styled.div`
-  font-weight: 700;
-  color: #064e3b;
-  font-size: 0.95rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.85rem;
-`;
-
-const ChecklistList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-`;
-
-const ChecklistItem = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  padding: 0.65rem;
-  border-radius: 8px;
-  background: ${props => props.checked ? '#e6f4ea' : '#ffffff'};
-  border: 1px solid ${props => props.checked ? '#a8dab5' : '#f1f5f9'};
-  cursor: ${props => props.locked ? 'not-allowed' : 'pointer'};
-  opacity: ${props => props.locked ? 0.9 : 1};
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: ${props => props.locked ? '#a8dab5' : '#059669'};
-  }
-`;
-
-const CheckIcon = styled.div`
-  color: ${props => props.checked ? '#059669' : '#94a3b8'};
-  font-size: 1.2rem;
-  margin-top: 1px;
-`;
-
-const ItemText = styled.span`
-  font-size: 0.88rem;
-  color: ${props => props.checked ? '#064e3b' : '#334155'};
-  text-decoration: ${props => props.checked ? 'line-through' : 'none'};
-  line-height: 1.4;
-`;
-
-const ProgressContainer = styled.div`
-  margin-bottom: 1rem;
-`;
-
-const ProgressBar = styled.div`
-  height: 8px;
-  background: ${colors.border};
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-`;
-
-const ProgressFill = styled.div`
-  height: 100%;
-  border-radius: 4px;
-  background: ${props => props.color || colors.primary};
-  transition: width 0.5s ease;
-`;
-
-const ProgressText = styled.span`
-  font-size: 0.88rem;
+  font-size: 1.05rem;
   color: ${colors.textLight};
-  display: flex;
-  justify-content: space-between;
-  font-weight: 600;
-`;
-
-const BadgeEarnedBanner = styled.div`
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #f59e0b;
-  color: #78350f;
-  padding: 0.65rem 1rem;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.88rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 1rem;
-`;
-
-const CardFooter = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 1rem;
-  border-top: 1px solid ${colors.border};
-`;
-
-const DateAdded = styled.span`
-  font-size: 0.8rem;
-  color: ${colors.textLight};
-`;
-
-const ViewRoutineButton = styled.button`
-  background: ${colors.primary};
-  color: white;
-  border: none;
-  padding: 0.55rem 1.1rem;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  &:hover {
-    background: ${colors.primaryDark};
-    transform: translateY(-2px);
-  }
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.6;
 `;
 
 const EmptyState = styled.div`
@@ -271,7 +64,7 @@ const EmptyState = styled.div`
   padding: 3rem 0;
   margin-top: 2rem;
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 `;
 
@@ -503,7 +296,7 @@ const SavedPlants = () => {
       </Header>
 
       {predictions.length > 0 ? (
-        <PlantsGrid>
+        <div className="sp-grid">
           {predictions.map((prediction, pIdx) => {
             const steps = getPointWiseSteps(prediction);
             const plantChecked = checkedMap[pIdx] || steps.map(() => false);
@@ -512,94 +305,121 @@ const SavedPlants = () => {
             const isFullyCompleted = (completedCount === steps.length && steps.length > 0) || prediction.badgeEarned;
 
             return (
-              <PlantCard key={pIdx}>
-                {/* PLANT & DISEASE HEADER */}
-                <PlantCardHeader>
-                  <CropLabel>Cotton Crop Disease Diagnosis</CropLabel>
-                  <DiseaseTitle>{prediction.className}</DiseaseTitle>
+              <div key={pIdx} className="sp-card">
+                {/* 2. HEADER SECTION (TYPOGRAPHY & BADGES) */}
+                <div className="sp-card-header">
+                  <div className="sp-header-left">
+                    <span className="sp-crop-badge">
+                      Cotton Crop Disease Diagnosis
+                    </span>
+                    <h2 className="sp-disease-title">
+                      {prediction.className}
+                    </h2>
+                  </div>
+
                   {prediction.region && (
-                    <LocationBadge>📍 {prediction.region}</LocationBadge>
+                    <span className="sp-location-badge">
+                      <span>📍</span> {prediction.region}
+                    </span>
                   )}
-                </PlantCardHeader>
+                </div>
 
-                <PlantDetails>
-                  {/* CHEMICAL FORMULATION (ENGLISH) */}
-                  {prediction.chemicalRecommendation && (
-                    <ChemicalBox>
-                      <ChemicalTitle>💊 Chemical Spray Remedy (English Product)</ChemicalTitle>
-                      <ChemicalText>{prediction.chemicalRecommendation}</ChemicalText>
-                    </ChemicalBox>
-                  )}
+                {/* 3. REMEDY HIGHLIGHT BOX */}
+                {prediction.chemicalRecommendation && (
+                  <div className="sp-remedy-box">
+                    <div className="sp-remedy-label">
+                      <span>💊</span> Chemical Spray Remedy (English Product)
+                    </div>
+                    <div className="sp-remedy-name">
+                      {prediction.chemicalRecommendation}
+                    </div>
+                  </div>
+                )}
 
-                  {/* POINT-WISE RECOMMENDATION CHECKLIST */}
-                  <ChecklistSection>
-                    <ChecklistHeader>
-                      <span>📋 Point-Wise Recommendation Checklist</span>
-                      {isFullyCompleted ? (
-                        <span style={{ fontSize: "0.82rem", color: "#059669", fontWeight: 800, display: "flex", alignItems: "center", gap: 4 }}>
-                          <FiLock /> 🔒 Completed & Locked
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: "0.82rem", color: "#059669" }}>
-                          {completedCount}/{steps.length} Done
-                        </span>
-                      )}
-                    </ChecklistHeader>
+                {/* 4. MODERN CHECKLIST SECTION */}
+                <div className="sp-checklist-box">
+                  <div className="sp-checklist-title">
+                    <span>📝 Point-Wise Recommendation Checklist</span>
+                    {isFullyCompleted ? (
+                      <span className="sp-checklist-badge locked">
+                        <FiLock /> Completed & Locked
+                      </span>
+                    ) : (
+                      <span className="sp-checklist-badge">
+                        {completedCount}/{steps.length} Done
+                      </span>
+                    )}
+                  </div>
 
-                    <ChecklistList>
-                      {steps.map((stepText, sIdx) => {
-                        const isChecked = plantChecked[sIdx] || false;
-                        return (
-                          <ChecklistItem
-                            key={sIdx}
+                  <div className="sp-checklist-items">
+                    {steps.map((stepText, sIdx) => {
+                      const isChecked = plantChecked[sIdx] || false;
+                      return (
+                        <label
+                          key={sIdx}
+                          className={`sp-checklist-item ${isChecked ? 'checked' : ''} ${isFullyCompleted ? 'locked' : ''}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleStepToggle(pIdx, sIdx);
+                          }}
+                        >
+                          <input
+                            type="checkbox"
                             checked={isChecked}
-                            locked={isFullyCompleted}
-                            onClick={() => handleStepToggle(pIdx, sIdx)}
-                          >
-                            <CheckIcon checked={isChecked}>
-                              {isChecked ? <FiCheckSquare /> : <FiSquare />}
-                            </CheckIcon>
-                            <ItemText checked={isChecked}>{stepText}</ItemText>
-                          </ChecklistItem>
-                        );
-                      })}
-                    </ChecklistList>
-                  </ChecklistSection>
+                            readOnly
+                            className="sp-checkbox"
+                          />
+                          <span className={`sp-item-text ${isChecked ? 'checked' : ''}`}>
+                            {stepText}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                  {/* PROGRESS BAR & BADGE BANNER */}
-                  <ProgressContainer>
-                    <ProgressBar>
-                      <ProgressFill style={{ width: `${progressPercent}%` }} color={progressPercent === 100 ? "#059669" : "#0284c7"} />
-                    </ProgressBar>
-                    <ProgressText>
-                      <span>Checklist Completion</span>
-                      <span>{progressPercent}%</span>
-                    </ProgressText>
-                  </ProgressContainer>
+                {/* PROGRESS BAR & BADGE BANNER */}
+                <div className="sp-progress-section">
+                  <div className="sp-progress-label">
+                    <span>Checklist Completion</span>
+                    <span className="sp-progress-val">{progressPercent}%</span>
+                  </div>
+                  <div className="sp-progress-track">
+                    <div
+                      className="sp-progress-fill"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
 
-                  {isFullyCompleted && (
-                    <BadgeEarnedBanner>
-                      <FiAward style={{ fontSize: "1.2rem", color: "#d97706" }} />
-                      🏆 {prediction.className} Care Master Badge Earned!
-                    </BadgeEarnedBanner>
-                  )}
+                {isFullyCompleted && (
+                  <div className="sp-badge-earned">
+                    <FiAward style={{ fontSize: '1.2rem', flexShrink: 0 }} />
+                    <span>🏆 {prediction.className} Care Master Badge Earned!</span>
+                  </div>
+                )}
 
-                  <CardFooter>
-                    <DateAdded>
-                      Saved: {new Date(prediction.timestamp || Date.now()).toLocaleDateString()}
-                    </DateAdded>
-                    <ViewRoutineButton onClick={() => notify.info(
-                      'Checklist Progress',
-                      `Completed ${completedCount}/${steps.length} checklist steps for ${prediction.className}`
-                    )}>
-                      <FiCheckCircle /> View Routine
-                    </ViewRoutineButton>
-                  </CardFooter>
-                </PlantDetails>
-              </PlantCard>
+                {/* 5. FOOTER & CALL TO ACTION BUTTON */}
+                <div className="sp-card-footer">
+                  <div className="sp-date">
+                    Saved: {new Date(prediction.timestamp || Date.now()).toLocaleDateString()}
+                  </div>
+                  <button
+                    onClick={() =>
+                      notify.info(
+                        'Checklist Progress',
+                        `Completed ${completedCount}/${steps.length} checklist steps for ${prediction.className}`
+                      )
+                    }
+                    className="sp-btn-action"
+                  >
+                    <FiCheckCircle style={{ fontSize: '1.1rem' }} /> View Routine
+                  </button>
+                </div>
+              </div>
             );
           })}
-        </PlantsGrid>
+        </div>
       ) : (
         <EmptyState>
           <EmptyImage src="/images/no-plants.svg" alt="No plants saved" />

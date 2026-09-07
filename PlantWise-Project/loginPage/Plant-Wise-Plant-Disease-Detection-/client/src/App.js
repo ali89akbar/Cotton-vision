@@ -11,12 +11,10 @@ import Lenis from '@studio-freight/lenis';
 import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import SocialMedia from './Components/SocialMedia';
-import BadgeProgressPage from './Components/BadgeProgressPage';
-import ARViewer from './Components/ARViewer';
-import PlantGallery from './Components/PlantGallery';
 import Footer from './Components/Footer';
 import Chatbot from './Components/Chatbot';
 import { NotificationProvider } from './Components/NotificationContext';
+import { WeatherProvider } from './Components/WeatherContext';
 
 const LenisSmoothScroll = () => {
   const { pathname } = useLocation();
@@ -53,7 +51,17 @@ const LenisSmoothScroll = () => {
 
 function AppContent() {
   const location = useLocation();
-  const isCommunityPage = location.pathname === '/social-media';
+
+  // Array of route paths where the global footer should be hidden
+  const hideFooterRoutes = [
+    '/login',
+    '/signup',
+    '/register',
+    '/complete-profile',
+    '/social-media'
+  ];
+
+  const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
 
   return (
     <>
@@ -68,12 +76,9 @@ function AppContent() {
         <Route path="/outbreak-radar" element={<OutbreakRadar />} />
         <Route path="/social-media" element={<SocialMedia />} /> 
         <Route path="/saved-plants" element={<SavedPlants />} />
-        {/* <Route path="/badge-progress" element={<BadgeProgressPage />} />
-        <Route path='/ar' element={<PlantGallery />}/>
-        <Route path='/ar-viewer' element={<ARViewer />}/> */}
         <Route path="*" element={<Error />} />
       </Routes>
-      {!isCommunityPage && <Footer />}
+      {!shouldHideFooter && <Footer />}
       <Chatbot />
     </>
   );
@@ -82,7 +87,9 @@ function AppContent() {
 function App() {
   return (
     <NotificationProvider>
-      <AppContent />
+      <WeatherProvider>
+        <AppContent />
+      </WeatherProvider>
     </NotificationProvider>
   );
 }

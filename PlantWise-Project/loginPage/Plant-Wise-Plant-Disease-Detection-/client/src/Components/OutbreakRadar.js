@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   FaSatellite,
   FaFlask,
@@ -16,158 +16,20 @@ import {
   FaShieldAlt,
 } from "react-icons/fa";
 import { FiSearch, FiRefreshCw } from "react-icons/fi";
-
-const SINDH_OUTBREAK_DATA = [
-  {
-    city: "Gambat",
-    district: "Khairpur District, Sindh",
-    cityUrdu: "گنبٽ",
-    lat: 27.3524,
-    lng: 68.5204,
-    riskLevel: "CRITICAL_RISK",
-    primaryThreat: "Fall Armyworm (Nocturnal Caterpillars)",
-    threatUrdu: "فال آرمی ورم (رات کا کیڑا)",
-    threatScore: 88,
-    threatLevelText: "CRITICAL",
-    gaugeColor: "#dc2626",
-    gaugeBgTrack: "#fee2e2",
-    heroBg: "#fef2f2",
-    heroBorder: "#fecaca",
-    temp: "33.5°C",
-    wind: "9.8 km/h",
-    windDeg: 45,
-    humidity: 71,
-    feelsLike: 37,
-    uvIndex: 7,
-    precipitation: "0.2 cm",
-    chanceOfRain: 45,
-    aqi: 130,
-    affectedAcres: "580 Acres",
-    recommendedChemical: "Emamectin Benzoate 5% SG @ 75g/acre (Evening Spray)",
-    statusBadge: { label: "CRITICAL OUTBREAK", bg: "#fee2e2", text: "#991b1b", dot: "#dc2626" },
-  },
-  {
-    city: "Sukkur",
-    district: "Sukkur District, Sindh",
-    cityUrdu: "سکر",
-    lat: 27.7052,
-    lng: 68.8574,
-    riskLevel: "HIGH_RISK",
-    primaryThreat: "Bacterial Blight & High Humidity",
-    threatUrdu: "بیکٹیریل بلائٹ اور نمی",
-    threatScore: 76,
-    threatLevelText: "HIGH RISK",
-    gaugeColor: "#ea580c",
-    gaugeBgTrack: "#ffedd5",
-    heroBg: "#fff7ed",
-    heroBorder: "#fed7aa",
-    temp: "34.2°C",
-    wind: "14.5 km/h",
-    windDeg: 120,
-    humidity: 78,
-    feelsLike: 39,
-    uvIndex: 8,
-    precipitation: "0.8 cm",
-    chanceOfRain: 60,
-    aqi: 142,
-    affectedAcres: "420 Acres",
-    recommendedChemical: "Copper Oxychloride @ 250g/acre + Streptocycline",
-    statusBadge: { label: "HIGH THREAT", bg: "#ffedd5", text: "#9a3412", dot: "#ea580c" },
-  },
-  {
-    city: "Khairpur",
-    district: "Khairpur Mirs, Sindh",
-    cityUrdu: "خیرپور",
-    lat: 27.5295,
-    lng: 68.7592,
-    riskLevel: "MODERATE_RISK",
-    primaryThreat: "Aphids (Sucking Pest Aggregation)",
-    threatUrdu: "سست تیلا (چوسنے والے کیڑے)",
-    threatScore: 58,
-    threatLevelText: "MODERATE",
-    gaugeColor: "#d97706",
-    gaugeBgTrack: "#fef3c7",
-    heroBg: "#fffbeb",
-    heroBorder: "#fde68a",
-    temp: "35.8°C",
-    wind: "11.2 km/h",
-    windDeg: 90,
-    humidity: 62,
-    feelsLike: 38,
-    uvIndex: 6,
-    precipitation: "0.0 cm",
-    chanceOfRain: 25,
-    aqi: 118,
-    affectedAcres: "310 Acres",
-    recommendedChemical: "Imidacloprid 200 SL @ 60 ml/acre",
-    statusBadge: { label: "MODERATE THREAT", bg: "#fef3c7", text: "#92400e", dot: "#d97706" },
-  },
-  {
-    city: "Rohri",
-    district: "Sukkur District, Sindh",
-    cityUrdu: "روهڙي",
-    lat: 27.6744,
-    lng: 68.8957,
-    riskLevel: "MODERATE_RISK",
-    primaryThreat: "Target Spot Fungal Lesions",
-    threatUrdu: "ٹارگٹ اسپاٹ فنگس",
-    threatScore: 54,
-    threatLevelText: "MODERATE",
-    gaugeColor: "#d97706",
-    gaugeBgTrack: "#fef3c7",
-    heroBg: "#fffbeb",
-    heroBorder: "#fde68a",
-    temp: "34.8°C",
-    wind: "13.1 km/h",
-    windDeg: 135,
-    humidity: 68,
-    feelsLike: 37,
-    uvIndex: 6,
-    precipitation: "0.1 cm",
-    chanceOfRain: 30,
-    aqi: 125,
-    affectedAcres: "210 Acres",
-    recommendedChemical: "Azoxystrobin + Difenoconazole @ 200 ml/acre",
-    statusBadge: { label: "MODERATE THREAT", bg: "#fef3c7", text: "#92400e", dot: "#d97706" },
-  },
-  {
-    city: "Ghotki",
-    district: "Ghotki District, Sindh",
-    cityUrdu: "گھوٽڪي",
-    lat: 28.0060,
-    lng: 69.3161,
-    riskLevel: "LOW_RISK",
-    primaryThreat: "Powdery Mildew (Early Symptoms)",
-    threatUrdu: "پاؤڈری ملڈیو (ابتدائی علامات)",
-    threatScore: 24,
-    threatLevelText: "LOW / SAFE",
-    gaugeColor: "#16a34a",
-    gaugeBgTrack: "#dcfce7",
-    heroBg: "#f0fdf4",
-    heroBorder: "#bbf7d0",
-    temp: "36.4°C",
-    wind: "12.0 km/h",
-    windDeg: 180,
-    humidity: 52,
-    feelsLike: 36,
-    uvIndex: 5,
-    precipitation: "0.0 cm",
-    chanceOfRain: 10,
-    aqi: 88,
-    affectedAcres: "140 Acres",
-    recommendedChemical: "Water-Soluble Sulfur @ 1 kg/acre",
-    statusBadge: { label: "LOW THREAT / SAFE", bg: "#dcfce7", text: "#166534", dot: "#16a34a" },
-  },
-];
+import { useWeather, SINDH_OUTBREAK_DATA } from "./WeatherContext";
 
 const OutbreakRadar = () => {
+  const {
+    setSelectedCityName,
+    liveWeather,
+    weatherLoading,
+    weatherSource,
+    activeCity,
+  } = useWeather();
+
   const [searchFilter, setSearchFilter] = useState("");
   const [selectedRiskFilter, setSelectedRiskFilter] = useState("ALL");
-  const [selectedCityName, setSelectedCityName] = useState("Gambat");
   const [displayScore, setDisplayScore] = useState(88);
-  const [liveWeather, setLiveWeather] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
-  const [weatherSource, setWeatherSource] = useState("OpenWeatherMap Live API");
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -186,9 +48,14 @@ const OutbreakRadar = () => {
   }, []);
 
   const filteredCities = SINDH_OUTBREAK_DATA.filter((item) => {
+    const q = searchFilter.toLowerCase().trim();
     const matchesSearch =
-      item.city.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      item.primaryThreat.toLowerCase().includes(searchFilter.toLowerCase());
+      !q ||
+      item.city.toLowerCase().includes(q) ||
+      item.district.toLowerCase().includes(q) ||
+      item.primaryThreat.toLowerCase().includes(q) ||
+      (item.threatUrdu && item.threatUrdu.toLowerCase().includes(q)) ||
+      (item.cityUrdu && item.cityUrdu.toLowerCase().includes(q));
 
     if (selectedRiskFilter === "ALL") return matchesSearch;
     if (selectedRiskFilter === "HIGH") return matchesSearch && (item.riskLevel === "HIGH_RISK" || item.riskLevel === "CRITICAL_RISK");
@@ -197,124 +64,44 @@ const OutbreakRadar = () => {
     return matchesSearch;
   });
 
-  const activeCity =
-    filteredCities.find((c) => c.city.toLowerCase() === selectedCityName.toLowerCase()) ||
-    filteredCities[0] ||
-    SINDH_OUTBREAK_DATA[0];
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchFilter(query);
 
-  // Fetch and Map Live Real-Time Weather from OpenWeatherMap API (with Satellite fallback)
-  useEffect(() => {
-    let isMounted = true;
-    setWeatherLoading(true);
+    const q = query.toLowerCase().trim();
+    const matches = SINDH_OUTBREAK_DATA.filter((item) => {
+      const matchesSearch =
+        !q ||
+        item.city.toLowerCase().includes(q) ||
+        item.district.toLowerCase().includes(q) ||
+        item.primaryThreat.toLowerCase().includes(q) ||
+        (item.threatUrdu && item.threatUrdu.toLowerCase().includes(q)) ||
+        (item.cityUrdu && item.cityUrdu.toLowerCase().includes(q));
 
-    const fetchWeather = async () => {
-      const apiKey = process.env.REACT_APP_OPENWEATHER_API_KEY || "2c68cac827dd9e327fdd97b4e39326ed";
+      if (selectedRiskFilter === "ALL") return matchesSearch;
+      if (selectedRiskFilter === "HIGH") return matchesSearch && (item.riskLevel === "HIGH_RISK" || item.riskLevel === "CRITICAL_RISK");
+      if (selectedRiskFilter === "MODERATE") return matchesSearch && item.riskLevel === "MODERATE_RISK";
+      if (selectedRiskFilter === "LOW") return matchesSearch && item.riskLevel === "LOW_RISK";
+      return matchesSearch;
+    });
 
-      try {
-        const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${activeCity.lat}&lon=${activeCity.lng}&appid=${apiKey}&units=metric`;
-        const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${activeCity.lat}&lon=${activeCity.lng}&appid=${apiKey}&units=metric`;
-
-        // Third-party weather APIs respond with `Access-Control-Allow-Origin: *`,
-        // which the browser rejects when requests are sent with credentials
-        // (a global `axios.defaults.withCredentials = true` is set in SocialMedia.js).
-        // Force `withCredentials: false` per-request so the CORS check passes.
-        const [weatherRes, forecastRes] = await Promise.all([
-          axios.get(weatherUrl, { withCredentials: false }),
-          axios.get(forecastUrl, { withCredentials: false }).catch(() => ({ data: null })),
-        ]);
-
-        if (isMounted && weatherRes.data && weatherRes.data.main) {
-          const owm = weatherRes.data;
-          const forecast = forecastRes.data;
-
-          const liveTemp = `${owm.main.temp.toFixed(1)}°C`;
-          const liveHumidity = Math.round(owm.main.humidity);
-          const liveWindSpeed = Math.round((owm.wind?.speed || 0) * 3.6);
-          const liveWindDeg = Math.round(owm.wind?.deg || activeCity.windDeg);
-          const liveFeelsLike = Math.round(owm.main.feels_like);
-          
-          const rainMm = owm.rain?.["1h"] || owm.rain?.["3h"] || 0;
-          const livePrecip = `${(rainMm / 10).toFixed(1)} cm`;
-
-          const pop = forecast?.list?.[0]?.pop !== undefined ? Math.round(forecast.list[0].pop * 100) : activeCity.chanceOfRain;
-
-          const cloudCover = owm.clouds?.all || 0;
-          const estimatedUv = Math.max(1, Math.min(11, Math.round(10 - (cloudCover / 10))));
-
-          setLiveWeather({
-            temp: liveTemp,
-            humidity: liveHumidity,
-            windSpeed: liveWindSpeed,
-            windDeg: liveWindDeg,
-            precipitation: livePrecip,
-            precipitationRaw: rainMm,
-            uvIndex: estimatedUv,
-            feelsLike: liveFeelsLike,
-            chanceOfRain: pop,
-            aqi: activeCity.aqi,
-          });
-          setWeatherSource("OpenWeatherMap Live API");
-          setWeatherLoading(false);
-          return;
-        }
-      } catch (owmError) {
-        // Fallback to Open-Meteo Satellite Feed
-        try {
-          const meteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${activeCity.lat}&longitude=${activeCity.lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,wind_speed_10m,wind_direction_10m,uv_index&hourly=precipitation_probability&timezone=auto`;
-          const meteoRes = await axios.get(meteoUrl, { withCredentials: false });
-          
-          if (isMounted && meteoRes.data && meteoRes.data.current) {
-            const curr = meteoRes.data.current;
-            setLiveWeather({
-              temp: `${curr.temperature_2m.toFixed(1)}°C`,
-              humidity: Math.round(curr.relative_humidity_2m),
-              windSpeed: Math.round(curr.wind_speed_10m),
-              windDeg: Math.round(curr.wind_direction_10m || activeCity.windDeg),
-              precipitation: curr.precipitation !== undefined ? `${(curr.precipitation / 10).toFixed(1)} cm` : activeCity.precipitation,
-              precipitationRaw: curr.precipitation || 0,
-              uvIndex: Math.round(curr.uv_index || activeCity.uvIndex),
-              feelsLike: Math.round(curr.apparent_temperature || activeCity.feelsLike),
-              chanceOfRain: meteoRes.data.hourly?.precipitation_probability?.[0] || activeCity.chanceOfRain,
-              aqi: activeCity.aqi,
-            });
-            setWeatherSource("Open-Meteo Satellite Feed");
-            setWeatherLoading(false);
-            return;
-          }
-        } catch (meteoError) {
-          if (isMounted) {
-            setLiveWeather({
-              temp: activeCity.temp,
-              humidity: activeCity.humidity,
-              windSpeed: parseFloat(activeCity.wind),
-              windDeg: activeCity.windDeg,
-              precipitation: activeCity.precipitation,
-              precipitationRaw: parseFloat(activeCity.precipitation) * 10,
-              uvIndex: activeCity.uvIndex,
-              feelsLike: activeCity.feelsLike,
-              chanceOfRain: activeCity.chanceOfRain,
-              aqi: activeCity.aqi,
-            });
-            setWeatherSource("Regional Sindh Ag-Telemetry");
-            setWeatherLoading(false);
-          }
-        }
-      }
-    };
-
-    fetchWeather();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [activeCity.city, activeCity.lat, activeCity.lng]);
+    if (matches.length > 0) {
+      setSelectedCityName(matches[0].city);
+    }
+  };
 
   const handleFilterClick = (filter) => {
     setSelectedRiskFilter(filter);
+    const q = searchFilter.toLowerCase().trim();
     const matches = SINDH_OUTBREAK_DATA.filter((item) => {
       const matchesSearch =
-        item.city.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        item.primaryThreat.toLowerCase().includes(searchFilter.toLowerCase());
+        !q ||
+        item.city.toLowerCase().includes(q) ||
+        item.district.toLowerCase().includes(q) ||
+        item.primaryThreat.toLowerCase().includes(q) ||
+        (item.threatUrdu && item.threatUrdu.toLowerCase().includes(q)) ||
+        (item.cityUrdu && item.cityUrdu.toLowerCase().includes(q));
+
       if (filter === "ALL") return matchesSearch;
       if (filter === "HIGH") return matchesSearch && (item.riskLevel === "HIGH_RISK" || item.riskLevel === "CRITICAL_RISK");
       if (filter === "MODERATE") return matchesSearch && item.riskLevel === "MODERATE_RISK";
@@ -483,10 +270,34 @@ const OutbreakRadar = () => {
             <input
               type="text"
               value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
+              onChange={handleSearchChange}
               placeholder="Search by city or pathogen e.g. Gambat, Sukkur, Armyworm..."
-              style={{ width: "100%", height: "44px", borderRadius: "12px", border: "1.5px solid #e2e8f0", paddingLeft: "42px", paddingRight: "14px", fontSize: "0.92rem", color: "#0f172a", outline: "none", background: "#f8fafc" }}
+              style={{ width: "100%", height: "44px", borderRadius: "12px", border: "1.5px solid #e2e8f0", paddingLeft: "42px", paddingRight: searchFilter ? "40px" : "14px", fontSize: "0.92rem", color: "#0f172a", outline: "none", background: "#f8fafc" }}
             />
+            {searchFilter && (
+              <button
+                onClick={() => {
+                  setSearchFilter("");
+                  setSelectedCityName(SINDH_OUTBREAK_DATA[0].city);
+                }}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  padding: "4px",
+                  lineHeight: 1
+                }}
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -977,7 +788,28 @@ const OutbreakRadar = () => {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
-          {filteredCities.map((item, idx) => {
+          {filteredCities.length === 0 ? (
+            <div style={{ background: "#ffffff", borderRadius: "24px", padding: "3rem 2rem", textAlign: "center", border: "1.5px solid #e2e8f0", gridColumn: "1 / -1", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔍</div>
+              <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "#0f172a", marginBottom: "0.5rem" }}>
+                No Surveillance Zones Found
+              </h3>
+              <p style={{ color: "#64748b", fontSize: "0.92rem", marginBottom: "1.25rem" }}>
+                No outbreak zones match your search query "{searchFilter}".
+              </p>
+              <button
+                onClick={() => {
+                  setSearchFilter("");
+                  setSelectedRiskFilter("ALL");
+                  setSelectedCityName(SINDH_OUTBREAK_DATA[0].city);
+                }}
+                style={{ background: "#059669", color: "#fff", border: "none", padding: "10px 24px", borderRadius: "50px", fontWeight: 800, cursor: "pointer", fontSize: "0.88rem", boxShadow: "0 4px 12px rgba(5,150,105,0.2)" }}
+              >
+                Reset Search & Filters
+              </button>
+            </div>
+          ) : (
+            filteredCities.map((item, idx) => {
             const isSelected = item.city === activeCity.city;
 
             return (
@@ -1058,7 +890,7 @@ const OutbreakRadar = () => {
                 </div>
               </motion.div>
             );
-          })}
+          }))}
         </div>
 
       </div>

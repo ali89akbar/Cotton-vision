@@ -151,10 +151,15 @@ const ModalOverlay = ({ modal, onClose }) => {
     if (e.target === overlayRef.current) onClose(id, false);
   };
 
-  const accentColor =
-    variant === 'confirm' ? (dangerConfirm ? 'var(--pw-danger)' : 'var(--pw-primary)') :
-    variant === 'info'    ? 'var(--pw-info)' :
-    'var(--pw-primary)';
+  const accentGrad =
+    variant === 'confirm' ? (dangerConfirm ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)') :
+    variant === 'info'    ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' :
+    'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+
+  const shadowColor =
+    variant === 'confirm' ? (dangerConfirm ? 'rgba(239, 68, 68, 0.35)' : 'rgba(16, 185, 129, 0.35)') :
+    variant === 'info'    ? 'rgba(16, 185, 129, 0.35)' :
+    'rgba(16, 185, 129, 0.35)';
 
   const iconNode =
     variant === 'confirm' ? (dangerConfirm ? <IconAlert /> : <IconInfo />) :
@@ -169,10 +174,24 @@ const ModalOverlay = ({ modal, onClose }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby={`pw-modal-title-${id}`}
-        style={{ '--accent': accentColor }}
+        style={{
+          '--modal-accent-grad': accentGrad,
+          '--modal-shadow-color': shadowColor
+        }}
       >
-        <div className="pw-modal-icon-ring" style={{ background: accentColor + '1a', color: accentColor }}>
-          {iconNode}
+        <button
+          className="pw-modal-close-btn"
+          onClick={() => onClose(id, false)}
+          aria-label="Close dialog"
+        >
+          ✕
+        </button>
+
+        <div className="pw-modal-icon-wrapper">
+          <div className="pw-modal-icon-glow" />
+          <div className="pw-modal-icon-ring">
+            {iconNode}
+          </div>
         </div>
 
         <h2 id={`pw-modal-title-${id}`} className="pw-modal-title">{title}</h2>
@@ -196,9 +215,8 @@ const ModalOverlay = ({ modal, onClose }) => {
             </>
           ) : (
             <button
-              className="pw-btn pw-btn-primary"
+              className="pw-btn pw-btn-primary pw-btn-full"
               onClick={() => onClose(id, true)}
-              style={{ background: accentColor }}
             >
               OK
             </button>
