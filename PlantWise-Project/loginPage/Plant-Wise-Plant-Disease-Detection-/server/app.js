@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const https = require("https");
+const jwt = require("jsonwebtoken");
 const dns = require("node:dns");
 dns.setServers([
   "8.8.8.8",
@@ -13,8 +14,7 @@ const router = express.Router();
 const PORT = process.env.PORT || 6005;
 const session = require("express-session");
 const passport = require("passport");
-const cron = require("node-cron");
-const nodemailer = require("nodemailer");
+
 const { OpenAI } = require("openai");
 const { Groq } = require("groq-sdk");
 const OAuth2Strategy = require("passport-google-oauth2").Strategy;
@@ -138,20 +138,44 @@ const googleStrategy = new OAuth2Strategy(
     callbackURL: GOOGLE_CALLBACK_URL,
     scope: ["profile", "email"]
   },
-    async (accessToken, refreshToken, profile, done) => {
+    async (accessToken, refreshToken, params, profile, done) => {
       try {
-        // Restricted scopes can omit emails/photos, so never index [0] blindly.
-        const email = (profile.emails && profile.emails[0] && profile.emails[0].value) || profile.email || "";
-        const image = (profile.photos && profile.photos[0] && profile.photos[0].value) || profile.picture || "";
+        // The OpenID Connect id_token from the token exchange carries all the
+        // profile claims we need. Decoding it lets us skip the Google userinfo
+        // HTTP call, which is reset by the local network/firewall.
+        const idToken = params && params.id_token;
+        const claims = idToken ? jwt.decode(idToken, { complete: false }) : null;
 
-        let user = await userdb.findOne({ googleId: profile.id });
+        let googleId = "";
+        let email = "";
+        let displayName = "";
+        let image = "";
+
+        if (claims && typeof claims === "object") {
+          googleId = claims.sub || "";
+          email = claims.email || "";
+          displayName = claims.name || "";
+          image = claims.picture || "";
+        } else if (profile) {
+          // Fallback if the token response ever omits the id_token.
+          googleId = profile.id || "";
+          email = (profile.emails && profile.emails[0] && profile.emails[0].value) || profile.email || "";
+          displayName = profile.displayName || "";
+          image = (profile.photos && profile.photos[0] && profile.photos[0].value) || profile.picture || "";
+        }
+
+        if (!googleId) {
+          return done(new Error("Google sign-in did not return a user identifier"), null);
+        }
+
+        let user = await userdb.findOne({ googleId });
 
         if (!user && email) {
           // Adopt a legacy record that has this address but no password and no
           // Google link, so the farmer keeps one account instead of two.
           user = await userdb.findOne({ email, googleId: { $exists: false }, password: { $exists: false } });
           if (user) {
-            user.googleId = profile.id;
+            user.googleId = googleId;
             user.provider = "google";
             console.log(`[google-oauth] linked Google identity to existing account ${user._id}`);
           }
@@ -159,8 +183,8 @@ const googleStrategy = new OAuth2Strategy(
 
         if (!user) {
           user = new userdb({
-            googleId: profile.id,
-            displayName: profile.displayName,
+            googleId,
+            displayName,
             email,
             image,
             provider: "google",
@@ -172,7 +196,7 @@ const googleStrategy = new OAuth2Strategy(
           await user.save();
         } else {
           let dirty = false;
-          if (!user.displayName && profile.displayName) { user.displayName = profile.displayName; dirty = true; }
+          if (!user.displayName && displayName) { user.displayName = displayName; dirty = true; }
           if (!user.email && email) { user.email = email; dirty = true; }
           if (!user.image && image) { user.image = image; dirty = true; }
           if (dirty) await user.save();
@@ -185,38 +209,17 @@ const googleStrategy = new OAuth2Strategy(
 );
 
 /**
- * Replaces the package's profile lookup, which is pinned to
- * https://www.googleapis.com/oauth2/v3/userinfo - the very host whose TLS is
- * reset on some networks, meaning sign-in would die immediately after a
- * successful token exchange. Returns the same profile shape the verify callback
- * above expects (id / displayName / emails / photos).
+ * The default profile lookup calls https://www.googleapis.com/oauth2/v3/userinfo,
+ * and our previous override called openidconnect.googleapis.com. Both hosts are
+ * reset by this machine's network/firewall, so the sign-in died right after a
+ * successful token exchange. We instead read the OpenID Connect id_token that
+ * Google returns with the access token and decode it locally. This bypass
+ * removes the fragile userinfo HTTP call entirely.
  */
-googleStrategy.userProfile = function (accessToken, done) {
-  const req = https.get(GOOGLE_USERINFO_URL, { headers: { Authorization: `Bearer ${accessToken}` } }, (res) => {
-    let body = "";
-    res.on("data", (chunk) => (body += chunk));
-    res.on("end", () => {
-      if (res.statusCode < 200 || res.statusCode > 299) {
-        return done(new Error(`Google userinfo answered HTTP ${res.statusCode}: ${body.slice(0, 200)}`));
-      }
-      try {
-        const json = JSON.parse(body);
-        const email = json.email || "";
-        done(null, {
-          provider: "google",
-          id: json.sub, // stable Google user id
-          displayName: json.name,
-          emails: email ? [{ value: email, type: "account" }] : [],
-          photos: json.picture ? [{ value: json.picture, type: "default" }] : [],
-          _json: json,
-        });
-      } catch (parseErr) {
-        done(parseErr);
-      }
-    });
-  });
-  req.setTimeout(15000, () => req.destroy(new Error(`Google userinfo timed out (${GOOGLE_USERINFO_URL})`)));
-  req.on("error", (err) => done(err));
+googleStrategy._loadUserProfile = function (accessToken, done) {
+  // Return an empty profile object; the real claims come from params.id_token
+  // in the verify callback above.
+  done(null, {});
 };
 
 passport.use(googleStrategy);
@@ -259,16 +262,8 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Email transporter setup
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+// Weather risk alert cron worker (replaces the old static care-reminder cron)
+const { init: initWeatherCron } = require('./services/weatherCron');
 
 // ============ ALL YOUR PREVIOUS APIs ============
 
@@ -1242,138 +1237,12 @@ app.get("/api/user/plant-progress", isAuthenticated, async (req, res) => {
 // it has been removed so there is exactly one implementation.
 ////////////////////////////////////////
 
-// ============ CRON JOB ============
-
-// Uncomment to enable email notifications
-// cron.schedule("* * * * *", async () => {
-//   try {
-//     const currentDate = new Date();
-//     console.log(`Running daily notifications at ${currentDate}`);
-
-//     const users = await userdb.find({
-//       'notifications.frequency': { $ne: 'none' },
-//       $or: [
-//         { 'notifications.lastSent': { $exists: false } },
-//         { 'notifications.lastSent': { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
-//       ]
-//     }).lean();
-
-//     for (const user of users) {
-//       try {
-//         const activePlants = user.predictions.filter(p => 
-//           !p.badgeEarned && 
-//           (p.morningCareRoutine && !p.completedMorning) || 
-//           (p.nightCareRoutine && !p.completedNight)
-//         );
-
-//         if (activePlants.length > 0) {
-//           await transporter.sendMail({
-//             from: `PlantCare <${process.env.EMAIL_USER}>`,
-//             to: user.email,
-//             subject: `🌿 Care for ${activePlants.length} plant${activePlants.length > 1 ? 's' : ''}`,
-//             html: generateEmailHtml(user, activePlants),
-//             text: generateEmailText(activePlants)
-//           });
-
-//           await userdb.updateOne(
-//             { _id: user._id },
-//             { $set: { 'notifications.lastSent': currentDate } }
-//           );
-
-//           console.log(`Notification sent to ${user.email}`);
-//         }
-//       } catch (userError) {
-//         console.error(`Error processing user ${user.email}:`, userError);
-//       }
-//     }
-
-//     console.log(`Notifications completed. Sent to ${users.length} users.`);
-//   } catch (error) {
-//     console.error("Error in notification cron job:", error);
-//   }
-// });
-
-// Helper functions
-function generateEmailHtml(user, plants) {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #4CAF50;">🌿 Your Plant Care Reminder</h2>
-      <p>Hello ${user.displayName}, here are your plants needing attention today:</p>
-      
-      ${plants.map(p => `
-        <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
-          <h3 style="margin-top: 0; color: #388E3C;">${p.className}</h3>
-          ${p.morningCareRoutine && !p.completedMorning ? `
-            <div style="margin-bottom: 10px;">
-              <strong>☀️ Morning Routine:</strong>
-              <ul style="margin-top: 5px; padding-left: 20px;">
-                ${p.morningCareRoutine.map(task => `<li>${task}</li>`).join('')}
-              </ul>
-            </div>
-          ` : ''}
-          
-          ${p.nightCareRoutine && !p.completedNight ? `
-            <div style="margin-bottom: 10px;">
-              <strong>🌙 Evening Routine:</strong>
-              <ul style="margin-top: 5px; padding-left: 20px;">
-                ${p.nightCareRoutine.map(task => `<li>${task}</li>`).join('')}
-              </ul>
-            </div>
-          ` : ''}
-          
-          ${getProgressMessage(p)}
-        </div>
-      `).join('')}
-      
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="http://localhost:3000/saved-plants" 
-           style="background: #4CAF50; color: white; padding: 12px 24px; 
-                  text-decoration: none; border-radius: 5px; font-weight: bold;">
-          View Your Plants
-        </a>
-      </div>
-      
-      <p style="font-size: 12px; color: #999; text-align: center;">
-        <a href="http://yourwebsite.com/settings/notifications">Change notification preferences</a>
-      </p>
-    </div>
-  `;
-}
-
-function getProgressMessage(plant) {
-  if (plant.completedMorning && !plant.completedNight) {
-    return `<p style="color: #FFA000; font-weight: bold;">
-      ⭐ Complete your evening routine to earn a badge!
-    </p>`;
-  }
-  if (!plant.completedMorning && plant.completedNight) {
-    return `<p style="color: #FFA000;">
-      🌞 Don't forget your morning routine!
-    </p>`;
-  }
-  return '';
-}
-
-function generateEmailText(plants) {
-  return plants.map(p => {
-    let message = `🌱 ${p.className}:\n`;
-    if (p.morningCareRoutine && !p.completedMorning) {
-      message += `☀️ Morning: ${p.morningCareRoutine.join(', ')}\n`;
-    }
-    if (p.nightCareRoutine && !p.completedNight) {
-      message += `🌙 Evening: ${p.nightCareRoutine.join(', ')}\n`;
-    }
-    if (p.completedMorning && !p.completedNight) {
-      message += `⭐ Complete evening routine to earn a badge!\n`;
-    }
-    return message;
-  }).join('\n\n');
-}
-
 // Mount API Routes
 const whatsappRoutes = require('./routes/whatsappRoutes');
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api', router);
+
+initWeatherCron();
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

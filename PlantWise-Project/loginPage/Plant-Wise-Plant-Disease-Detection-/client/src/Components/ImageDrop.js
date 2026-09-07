@@ -441,12 +441,30 @@ export const ImageUpload = () => {
       .then(res => {
         if (res.data && res.data.user) {
           setUser(res.data.user);
+          setIsProfileComplete(!!res.data.user.isProfileComplete);
         }
         setAuthLoading(false);
       })
       .catch(() => {
         setAuthLoading(false);
       });
+  }, []);
+
+  // Keep the banner state in sync when the profile cache is refreshed after
+  // login / logout in another tab or by the auth service.
+  useEffect(() => {
+    const refreshProfileStatus = () => {
+      const saved = localStorage.getItem('plantwise_user_profile');
+      if (saved) {
+        try {
+          setIsProfileComplete(!!JSON.parse(saved).isProfileComplete);
+        } catch (e) {
+          // ignore corrupt cache
+        }
+      }
+    };
+    window.addEventListener('storage', refreshProfileStatus);
+    return () => window.removeEventListener('storage', refreshProfileStatus);
   }, []);
 
   const handleFileChange = (files) => {

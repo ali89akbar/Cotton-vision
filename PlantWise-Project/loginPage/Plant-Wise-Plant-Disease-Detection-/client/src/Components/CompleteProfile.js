@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { registerUser } from '../Services/authService';
-import { getStoredToken } from '../Services/authStorage';
+import { getStoredToken, setCachedProfile, updateUser } from '../Services/authStorage';
 import { useNotification } from './NotificationContext';
 import { FaCheckCircle, FaUserCheck, FaLock } from 'react-icons/fa';
 import { FiUser, FiPhone, FiMapPin, FiLayers, FiCheck, FiMail } from 'react-icons/fi';
@@ -317,9 +317,9 @@ const CompleteProfile = () => {
       console.warn("Could not save to backend database, saving locally:", saveErr.message);
     }
 
-    // 2. Save to localStorage & trigger storage event
-    localStorage.setItem('plantwise_user_profile', JSON.stringify(profileData));
-    window.dispatchEvent(new Event('storage'));
+    // 2. Sync both auth caches so every component sees the completed state
+    setCachedProfile(profileData);
+    updateUser(profileData);
 
     // 3. WhatsApp Notification Logic: ONLY trigger 'welcome' if this was initial onboarding (NOT an edit)
     if (!isEditMode) {

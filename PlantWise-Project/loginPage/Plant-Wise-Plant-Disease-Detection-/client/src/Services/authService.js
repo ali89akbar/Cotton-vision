@@ -48,7 +48,13 @@ export const fetchSession = async () => {
     const { data } = await api.get('/api/auth/session');
     // Silent cache refresh - see cacheUser(): an updateUser() here made
     // <Headers/> re-probe this endpoint forever.
-    if (data.user) cacheUser(data.user);
+    if (data.user) {
+      cacheUser(data.user);
+      // Keep the legacy profile banner cache in sync too, so <Headers /> and
+      // <ImageDrop /> never show a stale "complete your profile" prompt after
+      // a logout / re-login.
+      setCachedProfile(data.user);
+    }
     return { isAuthenticated: Boolean(data.isAuthenticated), user: data.user || null };
   } catch (error) {
     return { isAuthenticated: false, user: null, error: getAuthError(error) };
@@ -90,5 +96,6 @@ export const logout = async () => {
   }
   clearSession();
   localStorage.removeItem('plantwise_user_profile');
+  localStorage.removeItem('plantwise_selected_city');
   window.dispatchEvent(new Event('storage'));
 };
